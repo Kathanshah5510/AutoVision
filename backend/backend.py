@@ -193,7 +193,7 @@ async def predict(file: UploadFile = File(...)):
         ))
 
     # ── Annotate image ───────────────────────────────────────
-    annotated_b64 = annotate_image(img_pil.copy(), [d.dict() for d in detections])
+    annotated_b64 = annotate_image(img_pil.copy(), [d.model_dump() if hasattr(d, 'model_dump') else d.dict() for d in detections])
 
     return PredictResponse(
         num_detections  = len(detections),
