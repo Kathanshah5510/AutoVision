@@ -10,9 +10,6 @@ dl_venv/
 # Dataset
 data/
 
-# Models (VERY IMPORTANT)
-models/
-
 # Logs
 *.log
 

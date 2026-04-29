@@ -1,0 +1,47 @@
+{
+  "feature_names": [
+    "car_age",
+    "km_driven",
+    "km_per_year",
+    "purchase_price",
+    "idv",
+    "is_luxury",
+    "is_premium",
+    "segment_multiplier",
+    "depreciation_factor",
+    "is_high_mileage",
+    "is_old_car",
+    "damage_count",
+    "total_area_frac",
+    "max_area_frac",
+    "avg_area_frac",
+    "avg_confidence",
+    "min_confidence",
+    "max_severity_score",
+    "avg_severity_score",
+    "count_dent",
+    "count_scratch",
+    "count_crack",
+    "count_glass_shatter",
+    "count_tire_flat",
+    "count_lamp_broken",
+    "has_glass_shatter",
+    "has_crack",
+    "has_lamp_broken",
+    "damage_value_ratio"
+  ],
+  "class_names": [
+    "dent",
+    "scratch",
+    "crack",
+    "glass shatter",
+    "tire flat",
+    "lamp broken"
+  ],
+  "metrics": {
+    "MAE": 8685.337890625,
+    "R2": 0.963798999786377,
+    "MAPE": 10.82901316508568
+  },
+  "model_version": "2.0-extended"
+}
