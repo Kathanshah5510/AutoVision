@@ -121,7 +121,7 @@ from ultralytics import YOLO  # type: ignore
 # CONFIG
 # ─────────────────────────────────────────────────────────────
 # MODEL_PATH  = "D:/MTech/Sem-2/IT549-Deep_Learning-1/AutoVision/models/best.pt"
-MODEL_PATH = "models/best.pt"
+MODEL_PATH = "../models/best.pt"
 CONF_THRESH = 0.25
 IMG_SIZE    = 640
 
