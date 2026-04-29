@@ -98,26 +98,39 @@
 
 // export default App;
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import UploadZone from "./UploadZone";
 import AnalyzingState from "./AnalyzingState";
 import AnnotatedImage from "./AnnotatedImage";
 import SummaryCards from "./SummaryCards";
 import DetectionTable from "./DetectionTable";
-import VehicleForm from "./VehicleForm";             // ← ADD 1: new import
+import VehicleForm from "./VehicleForm";
 import { detectDamage } from "../utils/api";
 
 function App() {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("autovision_theme");
+    return saved ? saved === "dark" : true; // default dark
+  });
 
-  // Detection state (unchanged)
+  // Sync body class + persist preference
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.remove("light-mode");
+    } else {
+      document.body.classList.add("light-mode");
+    }
+    localStorage.setItem("autovision_theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
+
+  // Detection state
   const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // ← ADD 2: vehicle state
+  // Vehicle state
   const [vehicleData, setVehicleData] = useState({
     car_model: "Maruti Swift",
     purchase_year: new Date().getFullYear() - 3,
@@ -131,7 +144,6 @@ function App() {
     setUploadProgress(0);
 
     try {
-      // ← ADD 3: pass vehicleData into detectDamage
       const data = await detectDamage(file, vehicleData, (progressEvent) => {
         const pct = Math.round(
           (progressEvent.loaded * 100) / (progressEvent.total || 1)
@@ -161,7 +173,7 @@ function App() {
   const isLoading = status === "uploading" || status === "analyzing";
 
   return (
-    <div className={darkMode ? "dark bg-black text-white min-h-screen" : ""}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-slate-950 text-white" : "bg-gray-50 text-slate-900"}`}>
       <Navbar darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
 
       <div className="pt-20 max-w-6xl mx-auto px-4 space-y-6 pb-12">

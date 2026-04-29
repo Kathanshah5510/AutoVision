@@ -1,966 +1,2005 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AutoVision — AI Damage Inspection</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-/* ── Reset & tokens ─────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoVision — AI Damage Inspection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* ── Reset & tokens ─────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-:root {
-  --bg:        #090c12;
-  --bg1:       #0d1117;
-  --bg2:       #111722;
-  --bg3:       #161d2b;
-  --panel:     #0f1520;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.12);
-  --text:      #e8eaf0;
-  --muted:     #6b7280;
-  --accent:    #00d4aa;
-  --accent2:   #0ea5e9;
-  --red:       #ef4444;
-  --amber:     #f59e0b;
-  --green:     #22c55e;
-  --purple:    #a78bfa;
-  --font-head: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --font-mono: 'DM Mono', monospace;
-  --r:         10px;
-  --r2:        14px;
-}
+    :root {
+      --bg: #090c12;
+      --bg1: #0d1117;
+      --bg2: #111722;
+      --bg3: #161d2b;
+      --panel: #0f1520;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.12);
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --accent: #00d4aa;
+      --accent2: #0ea5e9;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --green: #22c55e;
+      --purple: #a78bfa;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --r: 10px;
+      --r2: 14px;
+    }
 
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.5; overflow-x: hidden; }
+    /* ── Light theme variables ──────────────────────── */
+    [data-theme="light"] {
+      --bg: #f5f7fa;
+      --bg1: #eef1f5;
+      --bg2: #e8ecf1;
+      --bg3: #dfe4ea;
+      --panel: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border2: rgba(0, 0, 0, 0.12);
+      --text: #1a2332;
+      --muted: #6b7280;
+      --accent: #059669;
+      --accent2: #0284c7;
+      --red: #dc2626;
+      --amber: #d97706;
+      --green: #16a34a;
+      --purple: #7c3aed;
+    }
 
-/* ── Animated background grid ───────────────────── */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 0;
-  background-image:
-    linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-body::after {
-  content: '';
-  position: fixed; inset: 0; z-index: 0;
-  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,212,170,0.08) 0%, transparent 60%);
-  pointer-events: none;
-}
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      transition: background-color 0.4s ease, color 0.35s ease;
+    }
 
-#app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    /* ── Animated background grid ───────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
 
-/* ── Navbar ─────────────────────────────────────── */
-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 28px; height: 60px;
-  background: rgba(9,12,18,0.85);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-  position: sticky; top: 0; z-index: 100;
-}
-.nav-logo { display: flex; align-items: center; gap: 10px; }
-.nav-logo-mark {
-  width: 34px; height: 34px;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-head); font-size: 13px; font-weight: 800;
-  color: var(--accent); letter-spacing: -1px;
-}
-.nav-logo-text { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--text); }
-.nav-logo-sub  { font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: -2px; }
+    [data-theme="light"] body::before {
+      opacity: 0.4;
+    }
 
-.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
-.breadcrumb span { color: var(--accent); }
-.breadcrumb .sep { opacity: 0.3; }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 212, 170, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
 
-.nav-right { display: flex; align-items: center; gap: 12px; }
-.api-status {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 12px; font-family: var(--font-mono);
-  color: var(--green); background: rgba(34,197,94,0.1);
-  border: 1px solid rgba(34,197,94,0.2);
-  padding: 4px 12px; border-radius: 99px;
-}
-.api-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
-@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    [data-theme="light"] body::after {
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(5, 150, 105, 0.06) 0%, transparent 60%);
+    }
 
-.user-badge {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; font-family: var(--font-mono);
-  color: var(--text); background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border2);
-  padding: 4px 12px 4px 8px; border-radius: 99px;
-}
-.user-avatar {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-head); font-size: 10px; font-weight: 800;
-  color: #000;
-}
-.user-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btn-logout {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
-  padding: 4px 10px; border-radius: 6px; cursor: pointer;
-  background: rgba(239,68,68,0.1); color: #fca5a5;
-  border: 1px solid rgba(239,68,68,0.2);
-  transition: background 0.2s;
-}
-.btn-logout:hover { background: rgba(239,68,68,0.2); }
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-/* ── Edit profile modal ─────────────────────────── */
-.modal-overlay {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-  align-items: center; justify-content: center;
-}
-.modal-overlay.active { display: flex; }
-.modal-card {
-  background: var(--panel); border: 1px solid var(--border2);
-  border-radius: 14px; width: 460px; max-width: 95vw;
-  max-height: 85vh; overflow-y: auto;
-  animation: fadeUp 0.3s ease;
-}
-@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px; border-bottom: 1px solid var(--border);
-}
-.modal-header-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); }
-.modal-close {
-  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border2);
-  background: transparent; color: var(--muted); font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s, color 0.2s;
-}
-.modal-close:hover { background: rgba(239,68,68,0.1); color: var(--red); }
-.modal-body { padding: 20px; }
-.modal-body .m-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.modal-body .m-row.full { grid-template-columns: 1fr; }
-.modal-body .m-group { display: flex; flex-direction: column; gap: 4px; }
-.modal-body .m-group label {
-  font-family: var(--font-mono); font-size: 9px; color: var(--muted);
-  letter-spacing: 0.08em; text-transform: uppercase;
-}
-.modal-body .m-group input {
-  width: 100%; padding: 9px 12px; border: 1px solid var(--border2); border-radius: 8px;
-  background: rgba(255,255,255,0.03); color: var(--text);
-  font-family: var(--font-body); font-size: 13px; outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.modal-body .m-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,170,0.1); }
-.modal-footer {
-  display: flex; gap: 10px; justify-content: flex-end;
-  padding: 14px 20px; border-top: 1px solid var(--border);
-}
-.modal-btn {
-  padding: 8px 20px; border-radius: 8px; cursor: pointer;
-  font-family: var(--font-head); font-size: 12px; font-weight: 600;
-  border: none; transition: opacity 0.2s, transform 0.15s;
-}
-.modal-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-.modal-btn.primary { background: var(--accent); color: #000; }
-.modal-btn.secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border2); }
+    /* ── Navbar ─────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 60px;
+      background: rgba(9, 12, 18, 0.85);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background 0.4s ease, border-color 0.35s ease;
+    }
 
-.user-badge { cursor: pointer; }
-.user-badge:hover { border-color: var(--accent); }
+    [data-theme="light"] nav {
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
 
-.btn-new {
-  font-family: var(--font-head); font-size: 12px; font-weight: 600;
-  padding: 7px 18px; border-radius: 8px; cursor: pointer;
-  background: var(--accent); color: #000; border: none;
-  transition: opacity 0.2s, transform 0.15s;
-  letter-spacing: 0.02em;
-}
-.btn-new:hover { opacity: 0.85; transform: translateY(-1px); }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-/* ── Main layout ─────────────────────────────────── */
-main { flex: 1; display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px 20px 20px; max-width: 1400px; width: 100%; margin: 0 auto; }
+    .nav-logo img {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+    }
 
-/* ── Panel base ──────────────────────────────────── */
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--r2);
-  overflow: hidden;
-}
-.panel-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
-  color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
-}
+    .logo-light {
+      display: none;
+    }
 
-/* ── Left column ─────────────────────────────────── */
-.left-col { display: flex; flex-direction: column; gap: 14px; }
+    [data-theme="light"] .logo-dark {
+      display: none;
+    }
 
-/* ── Upload / Image panel ────────────────────────── */
-.image-panel { flex: 1; min-height: 0; }
+    [data-theme="light"] .logo-light {
+      display: block !important;
+    }
 
-.drop-zone {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 440px; cursor: pointer; position: relative;
-  transition: background 0.2s;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent, transparent 10px,
-    rgba(255,255,255,0.012) 10px, rgba(255,255,255,0.012) 20px
-  );
-}
-.drop-zone:hover, .drop-zone.drag-over { background: rgba(0,212,170,0.04); }
-.drop-zone input[type=file] { display: none; }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
 
-.drop-icon { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.25; }
-.drop-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text); opacity: 0.5; margin-bottom: 6px; }
-.drop-sub   { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
-.drop-btn {
-  margin-top: 20px; padding: 9px 24px;
-  border: 1px solid var(--accent); border-radius: 8px;
-  color: var(--accent); background: rgba(0,212,170,0.06);
-  font-family: var(--font-head); font-size: 12px; font-weight: 600;
-  cursor: pointer; transition: background 0.2s;
-}
-.drop-btn:hover { background: rgba(0,212,170,0.12); }
+    .breadcrumb span {
+      color: var(--accent);
+    }
 
-/* Image result view */
-.img-result { display: none; position: relative; }
-.img-result canvas { display: block; width: 100%; border-radius: 0; }
-.img-result img#uploaded-img { display: none; }
+    .breadcrumb .sep {
+      opacity: 0.3;
+    }
 
-/* Scan line animation */
-.scan-line {
-  position: absolute; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
-  opacity: 0; pointer-events: none; top: 0;
-}
-.scan-line.active { opacity: 1; animation: scan 2s linear forwards; }
-@keyframes scan { 0%{top:0%;opacity:1} 90%{opacity:1} 100%{top:100%;opacity:0} }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-/* Corner brackets */
-.bracket {
-  position: absolute; width: 20px; height: 20px;
-  border-color: var(--accent); border-style: solid; border-width: 0; opacity: 0;
-  transition: opacity 0.4s;
-}
-.bracket.tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; border-radius: 3px 0 0 0; }
-.bracket.tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; border-radius: 0 3px 0 0; }
-.bracket.bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; border-radius: 0 0 0 3px; }
-.bracket.br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; border-radius: 0 0 3px 0; }
-.bracket.show { opacity: 1; }
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--green);
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 4px 12px;
+      border-radius: 99px;
+    }
 
-/* ── Confidence slider row ───────────────────────── */
-.conf-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: rgba(0,0,0,0.2);
-}
-.conf-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
-input[type=range] {
-  flex: 1; -webkit-appearance: none; height: 3px;
-  background: linear-gradient(90deg, var(--accent) var(--pct, 75%), rgba(255,255,255,0.1) var(--pct, 75%));
-  border-radius: 99px; outline: none; cursor: pointer;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 14px; height: 14px;
-  border-radius: 50%; background: var(--accent); border: 2px solid var(--bg);
-  box-shadow: 0 0 6px rgba(0,212,170,0.5);
-}
-.conf-val { font-family: var(--font-mono); font-size: 11px; color: var(--accent); min-width: 36px; text-align: right; }
+    .api-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse-dot 2s infinite;
+    }
 
-/* ── Action buttons row ──────────────────────────── */
-.action-row {
-  display: flex; gap: 10px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-}
-.action-btn {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 9px; border-radius: 8px; cursor: pointer;
-  font-family: var(--font-head); font-size: 12px; font-weight: 600;
-  border: 1px solid var(--border2); background: rgba(255,255,255,0.04);
-  color: var(--text); transition: background 0.2s, border-color 0.2s, transform 0.15s;
-}
-.action-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
-.action-btn svg { width: 14px; height: 14px; }
+    @keyframes pulse-dot {
 
-/* ── Right column ────────────────────────────────── */
-.right-col { display: flex; flex-direction: column; gap: 14px; }
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
 
-/* ── Stats row ───────────────────────────────────── */
-.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+      50% {
+        opacity: 0.5;
+        transform: scale(0.8)
+      }
+    }
 
-.stat-card {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 14px;
-  position: relative; overflow: hidden;
-}
-.stat-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--accent-line, var(--accent));
-}
-.stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
-.stat-icon  { position: absolute; right: 12px; top: 12px; opacity: 0.15; font-size: 18px; }
-.stat-val   { font-family: var(--font-head); font-size: 26px; font-weight: 800; color: var(--text); }
-.stat-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
-.stat-card.cost { --accent-line: var(--accent2); }
-.stat-card.sev  { --accent-line: var(--amber); }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border2);
+      padding: 4px 12px 4px 8px;
+      border-radius: 99px;
+    }
 
-/* Severity gauge */
-.gauge-wrap { position: relative; width: 70px; height: 38px; margin: 4px 0; }
-.gauge-wrap svg { width: 100%; height: auto; overflow: visible; }
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 800;
+      color: #000;
+    }
 
-/* ── Detection feed ──────────────────────────────── */
-.feed-panel { flex: 1; }
-.feed-list { max-height: 280px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
-.feed-list::-webkit-scrollbar { width: 4px; }
-.feed-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+    .user-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-.feed-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 20px; color: var(--muted); text-align: center;
-  font-family: var(--font-mono); font-size: 11px;
-}
-.feed-empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.3; }
+    .btn-logout {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      transition: background 0.2s;
+    }
 
-.feed-item {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--border);
-  transition: background 0.15s; cursor: pointer;
-  animation: slide-in 0.35s ease both;
-}
-.feed-item:hover { background: rgba(255,255,255,0.03); }
-.feed-item:last-child { border-bottom: none; }
-@keyframes slide-in { from{opacity:0;transform:translateX(8px)} to{opacity:1;transform:none} }
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
 
-.feed-ico {
-  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 14px;
-}
-.feed-ico.high   { background: rgba(239,68,68,0.15);  color: var(--red); }
-.feed-ico.medium { background: rgba(245,158,11,0.15); color: var(--amber); }
-.feed-ico.low    { background: rgba(34,197,94,0.15);  color: var(--green); }
+    /* ── Theme toggle button ───────────────────────── */
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
 
-.feed-body { flex: 1; min-width: 0; }
-.feed-top  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.feed-name { font-family: var(--font-head); font-size: 14px; font-weight: 600; }
-.sev-badge {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
-  padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.08em;
-}
-.sev-badge.high   { background: rgba(239,68,68,0.2);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-.sev-badge.medium { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
-.sev-badge.low    { background: rgba(34,197,94,0.2);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
 
-.feed-bottom { display: flex; align-items: center; justify-content: space-between; }
-.conf-bar-wrap { flex: 1; margin-right: 12px; }
-.conf-bar-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-.conf-bar-track { height: 3px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
-.conf-bar-fill  { height: 100%; border-radius: 99px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
-.feed-cost { font-family: var(--font-mono); font-size: 11px; color: var(--text); text-align: right; white-space: nowrap; }
-.feed-cost-val { font-size: 13px; font-weight: 500; color: var(--accent); display: block; }
+    [data-theme="light"] .theme-toggle {
+      background: rgba(0, 0, 0, 0.04);
+    }
 
-/* ── Damage distribution ─────────────────────────── */
-.dist-panel { }
-.dist-bar-wrap { padding: 0 16px 16px; }
-.dist-seg-row  { display: flex; height: 8px; border-radius: 99px; overflow: hidden; gap: 2px; margin-bottom: 10px; }
-.dist-seg      { border-radius: 99px; transition: flex 0.8s cubic-bezier(0.4,0,0.2,1); }
-.dist-legend   { display: flex; flex-wrap: wrap; gap: 10px; }
-.dist-leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
-.dist-leg-dot  { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    [data-theme="light"] .theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
 
-/* ── Donut chart ─────────────────────────────────── */
-.chart-panel { }
-.chart-inner { padding: 10px 16px 16px; display: flex; align-items: center; gap: 16px; }
-.chart-canvas-wrap { width: 110px; height: 110px; flex-shrink: 0; position: relative; }
-.chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
-.chart-legend-list { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.chart-leg-row { display: flex; align-items: center; justify-content: space-between; }
-.chart-leg-left { display: flex; align-items: center; gap: 7px; }
-.chart-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.chart-leg-name { font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
-.chart-leg-pct  { font-size: 11px; font-family: var(--font-mono); color: var(--text); }
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.4s cubic-bezier(.4, 0, .2, 1), opacity 0.3s;
+    }
 
-/* ── Loading overlay ─────────────────────────────── */
-#loading-overlay {
-  display: none; position: absolute; inset: 0;
-  background: rgba(9,12,18,0.85); backdrop-filter: blur(4px);
-  flex-direction: column; align-items: center; justify-content: center;
-  z-index: 10; border-radius: var(--r2);
-}
-#loading-overlay.active { display: flex; }
-.loading-steps { display: flex; flex-direction: column; gap: 10px; min-width: 220px; }
-.loading-step  { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-.loading-step.done   { color: var(--green); }
-.loading-step.active { color: var(--accent); }
-.step-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  background: currentColor;
-}
-.step-dot.spin { animation: spin-dot 0.8s linear infinite; }
-@keyframes spin-dot { to { transform: rotate(360deg); } }
-.loading-label { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 16px; letter-spacing: 0.05em; }
+    .theme-toggle .icon-sun {
+      color: #fbbf24;
+      position: absolute;
+    }
 
-/* ── Error state ─────────────────────────────────── */
-.error-toast {
-  display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
-  color: #fca5a5; padding: 10px 20px; border-radius: 8px;
-  font-family: var(--font-mono); font-size: 12px; z-index: 999;
-  animation: toast-in 0.3s ease;
-}
-.error-toast.show { display: block; }
-@keyframes toast-in { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    .theme-toggle .icon-moon {
+      color: #94a3b8;
+      position: absolute;
+    }
 
-/* ── Scrollbar global ────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+    [data-theme="dark"] .theme-toggle .icon-sun {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
 
-/* ── Responsive ──────────────────────────────────── */
-@media (max-width: 900px) {
-  main { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 480px) {
-  .stats-row { grid-template-columns: 1fr; }
-  nav { padding: 0 14px; }
-  main { padding: 10px; gap: 10px; }
-}
+    [data-theme="dark"] .theme-toggle .icon-moon {
+      transform: rotate(90deg) scale(0);
+      opacity: 0;
+    }
 
-/* ── Util ────────────────────────────────────────── */
-.hidden { display: none !important; }
-.num-anim { transition: all 0.1s; }
-</style>
+    [data-theme="light"] .theme-toggle .icon-sun {
+      transform: rotate(-90deg) scale(0);
+      opacity: 0;
+    }
+
+    [data-theme="light"] .theme-toggle .icon-moon {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+      color: #6366f1;
+    }
+
+    /* ── Edit profile modal ─────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      width: 460px;
+      max-width: 95vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: fadeUp 0.3s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header-title {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--red);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-body .m-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal-body .m-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .modal-body .m-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .modal-body .m-group label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .modal-body .m-group input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .modal-body .m-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .modal-btn:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .modal-btn.primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .modal-btn.secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .user-badge {
+      cursor: pointer;
+    }
+
+    .user-badge:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-new {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-new:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    /* ── Main layout ─────────────────────────────────── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 16px;
+      padding: 16px 20px 20px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* ── Panel base ──────────────────────────────────── */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      overflow: hidden;
+      transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    [data-theme="light"] .panel {
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ── Left column ─────────────────────────────────── */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      /* min-height: 0; */
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* ── Upload / Image panel ────────────────────────── */
+    .image-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .drop-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      background: repeating-linear-gradient(-45deg,
+          transparent, transparent 10px,
+          rgba(255, 255, 255, 0.012) 10px, rgba(255, 255, 255, 0.012) 20px);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      background: rgba(0, 212, 170, 0.04);
+    }
+
+    .drop-zone input[type=file] {
+      display: none;
+    }
+
+    .drop-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.25;
+    }
+
+    .drop-title {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      opacity: 0.5;
+      margin-bottom: 6px;
+    }
+
+    .drop-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .drop-btn {
+      margin-top: 20px;
+      padding: 9px 24px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      color: var(--accent);
+      background: rgba(0, 212, 170, 0.06);
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .drop-btn:hover {
+      background: rgba(0, 212, 170, 0.12);
+    }
+
+    /* Image result view */
+    .img-result {
+      display: none;
+      position: relative;
+      text-align: center;
+      background: var(--bg1);
+      border-radius: 4px;
+      overflow: hidden;
+      flex: 1;
+      min-height: 0;
+      /* display: flex; */
+      /* align-items: center;
+      justify-content: center; */
+    }
+
+    .img-result canvas {
+      display: block;
+      margin: 0 auto;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 0;
+    }
+
+    .img-result img#uploaded-img {
+      display: none;
+    }
+
+    /* Scan line animation */
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+      opacity: 0;
+      pointer-events: none;
+      top: 0;
+    }
+
+    .scan-line.active {
+      opacity: 1;
+      animation: scan 2s linear forwards;
+    }
+
+    @keyframes scan {
+      0% {
+        top: 0%;
+        opacity: 1
+      }
+
+      90% {
+        opacity: 1
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0
+      }
+    }
+
+    /* Corner brackets */
+    .bracket {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: var(--accent);
+      border-style: solid;
+      border-width: 0;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .bracket.tl {
+      top: 8px;
+      left: 8px;
+      border-top-width: 2px;
+      border-left-width: 2px;
+      border-radius: 3px 0 0 0;
+    }
+
+    .bracket.tr {
+      top: 8px;
+      right: 8px;
+      border-top-width: 2px;
+      border-right-width: 2px;
+      border-radius: 0 3px 0 0;
+    }
+
+    .bracket.bl {
+      bottom: 8px;
+      left: 8px;
+      border-bottom-width: 2px;
+      border-left-width: 2px;
+      border-radius: 0 0 0 3px;
+    }
+
+    .bracket.br {
+      bottom: 8px;
+      right: 8px;
+      border-bottom-width: 2px;
+      border-right-width: 2px;
+      border-radius: 0 0 3px 0;
+    }
+
+    .bracket.show {
+      opacity: 1;
+    }
+
+    /* ── Confidence slider row ───────────────────────── */
+    .conf-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .conf-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent) var(--pct, 75%), rgba(255, 255, 255, 0.1) var(--pct, 75%));
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 6px rgba(0, 212, 170, 0.5);
+    }
+
+    .conf-val {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ── Action buttons row ──────────────────────────── */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border2);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .action-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ── Right column ────────────────────────────────── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+      /* max-height: calc(100vh - 92px); */
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+    }
+
+    /* ── Stats row ───────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    [data-theme="light"] .stat-card {
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-line, var(--accent));
+    }
+
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stat-icon {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      opacity: 0.15;
+      font-size: 18px;
+    }
+
+    .stat-val {
+      font-family: var(--font-head);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .stat-card.cost {
+      --accent-line: var(--accent2);
+    }
+
+    .stat-card.sev {
+      --accent-line: var(--amber);
+    }
+
+    /* Severity gauge */
+    .gauge-wrap {
+      position: relative;
+      width: 70px;
+      height: 38px;
+      margin: 4px 0;
+    }
+
+    .gauge-wrap svg {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    /* ── Detection feed ──────────────────────────────── */
+    .feed-panel {
+      flex: 0 0 auto;
+    }
+
+    .feed-list {
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+    }
+
+    .feed-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .feed-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+    }
+
+    .feed-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .feed-empty-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      opacity: 0.3;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      cursor: pointer;
+      animation: slide-in 0.35s ease both;
+    }
+
+    .feed-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .feed-item:last-child {
+      border-bottom: none;
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateX(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .feed-ico {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .feed-ico.high {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .feed-ico.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+    }
+
+    .feed-ico.low {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    .feed-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .feed-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .feed-name {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sev-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sev-badge.high {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .sev-badge.medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .sev-badge.low {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .feed-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .conf-bar-wrap {
+      flex: 1;
+      margin-right: 12px;
+    }
+
+    .conf-bar-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .conf-bar-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feed-cost {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .feed-cost-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      display: block;
+    }
+
+    /* ── Damage distribution ─────────────────────────── */
+    .dist-panel {}
+
+    .dist-bar-wrap {
+      padding: 0 16px 16px;
+    }
+
+    .dist-seg-row {
+      display: flex;
+      height: 8px;
+      border-radius: 99px;
+      overflow: hidden;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+
+    .dist-seg {
+      border-radius: 99px;
+      transition: flex 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dist-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dist-leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    .dist-leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Donut chart ─────────────────────────────────── */
+    .chart-panel {}
+
+    .chart-inner {
+      padding: 10px 16px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      min-height: 120px;
+    }
+
+    .chart-canvas-wrap {
+      width: 110px;
+      height: 110px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .chart-canvas-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .chart-legend-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 130px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+    }
+
+    .chart-leg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-leg-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .chart-leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .chart-leg-name {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    .chart-leg-pct {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text);
+    }
+
+    /* ── Loading overlay ─────────────────────────────── */
+    #loading-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 12, 18, 0.85);
+      backdrop-filter: blur(4px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: var(--r2);
+      transition: background 0.35s ease;
+    }
+
+    [data-theme="light"] #loading-overlay {
+      background: rgba(245, 247, 250, 0.9);
+    }
+
+    #loading-overlay.active {
+      display: flex;
+    }
+
+    .loading-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 220px;
+    }
+
+    .loading-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .loading-step.done {
+      color: var(--green);
+    }
+
+    .loading-step.active {
+      color: var(--accent);
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: currentColor;
+    }
+
+    .step-dot.spin {
+      animation: spin-dot 0.8s linear infinite;
+    }
+
+    @keyframes spin-dot {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-label {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Error state ─────────────────────────────────── */
+    .error-toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      z-index: 999;
+      animation: toast-in 0.3s ease;
+    }
+
+    [data-theme="light"] .error-toast {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+    }
+
+    .error-toast.show {
+      display: block;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    /* ── Light-mode specific overrides ──────────────── */
+    [data-theme="light"] .drop-zone {
+      background: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.015) 10px, rgba(0, 0, 0, 0.015) 20px);
+    }
+
+    [data-theme="light"] .drop-zone:hover,
+    [data-theme="light"] .drop-zone.drag-over {
+      background: rgba(5, 150, 105, 0.04);
+    }
+
+    [data-theme="light"] .feed-item:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    [data-theme="light"] .modal-overlay {
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="light"] .modal-card {
+      background: #fff;
+    }
+
+    [data-theme="light"] .modal-body .m-group input {
+      background: #f8fafc;
+    }
+
+    [data-theme="light"] .conf-row {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    [data-theme="light"] input[type=range] {
+      background: linear-gradient(90deg, var(--accent) var(--pct, 75%), rgba(0, 0, 0, 0.1) var(--pct, 75%));
+    }
+
+    [data-theme="light"] .user-avatar {
+      color: #fff;
+    }
+
+    [data-theme="light"] ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    /* ── Scrollbar global ────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        padding: 0 14px;
+      }
+
+      main {
+        padding: 10px;
+        gap: 10px;
+      }
+    }
+
+    /* ── Util ────────────────────────────────────────── */
+    .hidden {
+      display: none !important;
+    }
+
+    .num-anim {
+      transition: all 0.1s;
+    }
+  </style>
 </head>
+
 <body>
-<div id="app">
+  <div id="app">
 
-<!-- ── Navbar ─────────────────────────────────────── -->
-<nav>
-  <div class="nav-logo">
-    <div class="nav-logo-mark">[v]</div>
-    <div>
-      <div class="nav-logo-text">AutoVision</div>
-      <div class="nav-logo-sub">AI Inspection</div>
-    </div>
-  </div>
-
-  <div class="breadcrumb">
-    <span style="color:var(--muted)">Home</span>
-    <span class="sep">›</span>
-    <span style="color:var(--muted)">Inspect</span>
-    <span class="sep">›</span>
-    <span>Result</span>
-  </div>
-
-  <div class="nav-right">
-    <div class="user-badge" id="user-badge" style="display:none" onclick="openEditModal()">
-      <div class="user-avatar" id="user-avatar"></div>
-      <span class="user-name" id="user-name"></span>
-    </div>
-    <div class="api-status">
-      <div class="api-dot"></div>
-      API Online
-    </div>
-    <button class="btn-new" onclick="resetApp()">New Scan</button>
-    <button class="btn-logout" onclick="logoutUser()">Logout</button>
-  </div>
-</nav>
-
-<!-- ── Main ───────────────────────────────────────── -->
-<main>
-
-  <!-- ══ LEFT COLUMN ══════════════════════════════ -->
-  <div class="left-col">
-
-    <!-- Image panel -->
-    <div class="panel image-panel" style="position:relative">
-      <div class="panel-header">
-        <span class="panel-title">Annotated Image</span>
-        <span id="img-status" style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">— awaiting upload</span>
+    <!-- ── Navbar ─────────────────────────────────────── -->
+    <nav>
+      <div class="nav-logo">
+        <img src="./assets/logo-dark.png" alt="AutoVision Logo" class="logo-dark">
+        <img src="./assets/logo-light.png" alt="AutoVision Logo" class="logo-light">
       </div>
 
-      <!-- Drop zone -->
-      <div class="drop-zone" id="drop-zone">
-        <input type="file" id="file-input" accept="image/*"/>
-        <svg class="drop-icon" viewBox="0 0 48 48" fill="none">
-          <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" stroke-width="1.5"/>
-          <circle cx="16" cy="20" r="4" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M4 32l10-8 8 6 8-10 14 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div class="drop-title">Drop car image here</div>
-        <div class="drop-sub">PNG, JPG, WEBP — max 10MB</div>
-        <label class="drop-btn" for="file-input">Browse Files</label>
+      <div class="breadcrumb">
+        <span style="color:var(--muted)">Home</span>
+        <span class="sep">›</span>
+        <span style="color:var(--muted)">Inspect</span>
+        <span class="sep">›</span>
+        <span>Result</span>
       </div>
 
-      <!-- Image result -->
-      <div class="img-result" id="img-result">
-        <img id="uploaded-img" alt="uploaded"/>
-        <canvas id="annotation-canvas"></canvas>
-        <div class="scan-line" id="scan-line"></div>
-        <div class="bracket tl" id="br-tl"></div>
-        <div class="bracket tr" id="br-tr"></div>
-        <div class="bracket bl" id="br-bl"></div>
-        <div class="bracket br" id="br-br"></div>
+      <div class="nav-right">
+        <div class="user-badge" id="user-badge" style="display:none" onclick="openEditModal()">
+          <div class="user-avatar" id="user-avatar"></div>
+          <span class="user-name" id="user-name"></span>
+        </div>
+        <!-- Theme toggle -->
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+        <button class="btn-new" onclick="resetApp()">New Scan</button>
+        <button class="btn-logout" onclick="logoutUser()">Logout</button>
       </div>
+    </nav>
 
-      <!-- Confidence filter (disabled — hardcoded 35% threshold) -->
-      <!-- <div class="conf-row" id="conf-row" style="display:none">
+    <!-- ── Main ───────────────────────────────────────── -->
+    <main>
+
+      <!-- ══ LEFT COLUMN ══════════════════════════════ -->
+      <div class="left-col">
+
+        <!-- Image panel -->
+        <div class="panel image-panel" style="position:relative">
+          <div class="panel-header">
+            <span class="panel-title">Annotated Image</span>
+            <span id="img-status" style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">— awaiting
+              upload</span>
+          </div>
+
+          <!-- Drop zone -->
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="file-input" accept="image/*" />
+            <svg class="drop-icon" viewBox="0 0 48 48" fill="none">
+              <rect x="4" y="10" width="40" height="30" rx="4" stroke="currentColor" stroke-width="1.5" />
+              <circle cx="16" cy="20" r="4" stroke="currentColor" stroke-width="1.5" />
+              <path d="M4 32l10-8 8 6 8-10 14 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <div class="drop-title">Drop car image here</div>
+            <div class="drop-sub">PNG, JPG, WEBP — max 10MB</div>
+            <label class="drop-btn" for="file-input">Browse Files</label>
+          </div>
+
+          <!-- Image result -->
+          <div class="img-result" id="img-result">
+            <img id="uploaded-img" alt="uploaded" />
+            <canvas id="annotation-canvas"></canvas>
+            <div class="scan-line" id="scan-line"></div>
+            <div class="bracket tl" id="br-tl"></div>
+            <div class="bracket tr" id="br-tr"></div>
+            <div class="bracket bl" id="br-bl"></div>
+            <div class="bracket br" id="br-br"></div>
+          </div>
+
+          <!-- Confidence filter (disabled — hardcoded 35% threshold) -->
+          <!-- <div class="conf-row" id="conf-row" style="display:none">
         <span class="conf-label">Confidence threshold</span>
         <input type="range" id="conf-slider" min="0" max="100" value="35" style="--pct:35%"
                oninput="onConfSlider(this.value)"/>
         <span class="conf-val" id="conf-val">35%</span>
       </div> -->
 
-      <!-- Action buttons -->
-      <div class="action-row" id="action-row" style="display:none">
-        <button class="action-btn" onclick="downloadReport()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <path d="M8 2v8M5 7l3 3 3-3M2 12v2h12v-2"/>
-          </svg>
-          Download Report
-        </button>
-        <button class="action-btn" onclick="shareResult()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <circle cx="12" cy="4" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="12" r="1.5"/>
-            <path d="M5.5 7L10.5 5M5.5 9L10.5 11"/>
-          </svg>
-          Share
-        </button>
-      </div>
+          <!-- Action buttons -->
+          <div class="action-row" id="action-row" style="display:none">
+            <button class="action-btn" onclick="downloadReport()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M8 2v8M5 7l3 3 3-3M2 12v2h12v-2" />
+              </svg>
+              Download Report
+            </button>
+            <button class="action-btn" onclick="shareResult()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <circle cx="12" cy="4" r="1.5" />
+                <circle cx="4" cy="8" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <path d="M5.5 7L10.5 5M5.5 9L10.5 11" />
+              </svg>
+              Share
+            </button>
+          </div>
 
-      <!-- Loading overlay -->
-      <div id="loading-overlay">
-        <div class="loading-label">ANALYSING</div>
-        <div class="loading-steps">
-          <div class="loading-step" id="step-0"><div class="step-dot"></div>Uploading image…</div>
-          <div class="loading-step" id="step-1"><div class="step-dot"></div>Running detection…</div>
-          <div class="loading-step" id="step-2"><div class="step-dot"></div>Classifying damage…</div>
-          <div class="loading-step" id="step-3"><div class="step-dot"></div>Estimating cost…</div>
-          <div class="loading-step" id="step-4"><div class="step-dot"></div>Generating report…</div>
+          <!-- Loading overlay -->
+          <div id="loading-overlay">
+            <div class="loading-label">ANALYSING</div>
+            <div class="loading-steps">
+              <div class="loading-step" id="step-0">
+                <div class="step-dot"></div>Uploading image…
+              </div>
+              <div class="loading-step" id="step-1">
+                <div class="step-dot"></div>Running detection…
+              </div>
+              <div class="loading-step" id="step-2">
+                <div class="step-dot"></div>Classifying damage…
+              </div>
+              <div class="loading-step" id="step-3">
+                <div class="step-dot"></div>Estimating cost…
+              </div>
+              <div class="loading-step" id="step-4">
+                <div class="step-dot"></div>Generating report…
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /left-col -->
+
+      <!-- ══ RIGHT COLUMN ═════════════════════════════ -->
+      <div class="right-col">
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total damages</div>
+            <div class="stat-val" id="stat-count">—</div>
+            <div class="stat-sub" id="stat-count-sub">awaiting scan</div>
+          </div>
+          <div class="stat-card cost">
+            <div class="stat-label">Cost range</div>
+            <div class="stat-icon">₹</div>
+            <div class="stat-val" id="stat-cost" style="font-size:16px;margin-top:4px">—</div>
+            <div class="stat-sub" id="stat-cost-sub">estimated repair</div>
+          </div>
+          <div class="stat-card sev">
+            <div class="stat-label">Severity</div>
+            <div class="stat-icon">⚠</div>
+            <div class="gauge-wrap" id="gauge-wrap">
+              <svg viewBox="0 0 80 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 40 A32 32 0 0 1 72 40" stroke="rgba(255,255,255,0.08)" stroke-width="6"
+                  stroke-linecap="round" />
+                <path id="gauge-arc" d="M8 40 A32 32 0 0 1 72 40" stroke="var(--amber)" stroke-width="6"
+                  stroke-linecap="round" stroke-dasharray="101" stroke-dashoffset="101"
+                  style="transition:stroke-dashoffset 1s ease,stroke 0.5s" />
+                <text id="gauge-text" x="40" y="42" text-anchor="middle" font-family="'Syne',sans-serif" font-size="11"
+                  font-weight="700" fill="var(--amber)">—</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detection feed -->
+        <div class="panel feed-panel">
+          <div class="panel-header">
+            <span class="panel-title">Detection Feed</span>
+            <span id="feed-count-label"
+              style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">scrollable list</span>
+          </div>
+          <div class="feed-list" id="feed-list">
+            <div class="feed-empty">
+              <div class="feed-empty-icon">📡</div>
+              No detections yet.<br />Upload a car image to begin.
+            </div>
+          </div>
+        </div>
+
+        <!-- Damage distribution bar -->
+        <div class="panel dist-panel">
+          <div class="panel-header">
+            <span class="panel-title">Damage Distribution</span>
+            <span id="dist-label"
+              style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">`damage_summary`</span>
+          </div>
+          <div class="dist-bar-wrap">
+            <div class="dist-seg-row" id="dist-bar">
+              <div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>
+            </div>
+            <div class="dist-legend" id="dist-legend">
+              <div class="dist-leg-item">
+                <div class="dist-leg-dot" style="background:var(--muted)"></div><span>—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donut chart -->
+        <div class="panel chart-panel">
+          <div class="panel-header">
+            <span class="panel-title">Cost Breakdown</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">per damage type</span>
+          </div>
+          <div class="chart-inner">
+            <div class="chart-canvas-wrap">
+              <canvas id="donut-chart"></canvas>
+            </div>
+            <div class="chart-legend-list" id="chart-legend">
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+    </main>
+  </div><!-- /app -->
+
+  <div class="error-toast" id="error-toast"></div>
+
+  <!-- ── Edit Profile Modal ─────────────────────────── -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-header-title">Edit Profile</span>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="m-row">
+          <div class="m-group"><label>Full Name</label><input type="text" id="m-fullname" /></div>
+          <div class="m-group"><label>Email</label><input type="email" id="m-email" /></div>
+        </div>
+        <div class="m-row">
+          <div class="m-group"><label>Phone</label><input type="tel" id="m-phone" /></div>
+          <div class="m-group"><label>Company</label><input type="text" id="m-company" /></div>
+        </div>
+        <div class="m-row">
+          <div class="m-group"><label>Vehicle Reg. Number</label><input type="text" id="m-vehicle-reg"
+              style="text-transform:uppercase" /></div>
+          <div class="m-group"><label>Make / Model</label><input type="text" id="m-vehicle-model" /></div>
+        </div>
+        <div class="m-row full">
+          <div class="m-group"><label>Vehicle Owner</label><input type="text" id="m-owner-name" /></div>
         </div>
       </div>
-    </div>
-
-  </div><!-- /left-col -->
-
-  <!-- ══ RIGHT COLUMN ═════════════════════════════ -->
-  <div class="right-col">
-
-    <!-- Stats row -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Total damages</div>
-        <div class="stat-icon">🔍</div>
-        <div class="stat-val" id="stat-count">—</div>
-        <div class="stat-sub" id="stat-count-sub">awaiting scan</div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="saveEditModal()">Save Changes</button>
       </div>
-      <div class="stat-card cost">
-        <div class="stat-label">Cost range</div>
-        <div class="stat-icon">₹</div>
-        <div class="stat-val" id="stat-cost" style="font-size:16px;margin-top:4px">—</div>
-        <div class="stat-sub" id="stat-cost-sub">estimated repair</div>
-      </div>
-      <div class="stat-card sev">
-        <div class="stat-label">Severity</div>
-        <div class="stat-icon">⚠</div>
-        <div class="gauge-wrap" id="gauge-wrap">
-          <svg viewBox="0 0 80 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 40 A32 32 0 0 1 72 40" stroke="rgba(255,255,255,0.08)" stroke-width="6" stroke-linecap="round"/>
-            <path id="gauge-arc" d="M8 40 A32 32 0 0 1 72 40" stroke="var(--amber)" stroke-width="6" stroke-linecap="round"
-                  stroke-dasharray="101" stroke-dashoffset="101" style="transition:stroke-dashoffset 1s ease,stroke 0.5s"/>
-            <text id="gauge-text" x="40" y="42" text-anchor="middle" font-family="'Syne',sans-serif" font-size="11" font-weight="700" fill="var(--amber)">—</text>
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detection feed -->
-    <div class="panel feed-panel">
-      <div class="panel-header">
-        <span class="panel-title">Detection Feed</span>
-        <span id="feed-count-label" style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">scrollable list</span>
-      </div>
-      <div class="feed-list" id="feed-list">
-        <div class="feed-empty">
-          <div class="feed-empty-icon">📡</div>
-          No detections yet.<br/>Upload a car image to begin.
-        </div>
-      </div>
-    </div>
-
-    <!-- Damage distribution bar -->
-    <div class="panel dist-panel">
-      <div class="panel-header">
-        <span class="panel-title">Damage Distribution</span>
-        <span id="dist-label" style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">`damage_summary`</span>
-      </div>
-      <div class="dist-bar-wrap">
-        <div class="dist-seg-row" id="dist-bar">
-          <div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>
-        </div>
-        <div class="dist-legend" id="dist-legend">
-          <div class="dist-leg-item"><div class="dist-leg-dot" style="background:var(--muted)"></div><span>—</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Donut chart -->
-    <div class="panel chart-panel">
-      <div class="panel-header">
-        <span class="panel-title">Cost Breakdown</span>
-        <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">per damage type</span>
-      </div>
-      <div class="chart-inner">
-        <div class="chart-canvas-wrap">
-          <canvas id="donut-chart"></canvas>
-        </div>
-        <div class="chart-legend-list" id="chart-legend">
-          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /right-col -->
-</main>
-</div><!-- /app -->
-
-<div class="error-toast" id="error-toast"></div>
-
-<!-- ── Edit Profile Modal ─────────────────────────── -->
-<div class="modal-overlay" id="edit-modal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <span class="modal-header-title">Edit Profile</span>
-      <button class="modal-close" onclick="closeEditModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="m-row">
-        <div class="m-group"><label>Full Name</label><input type="text" id="m-fullname"/></div>
-        <div class="m-group"><label>Email</label><input type="email" id="m-email"/></div>
-      </div>
-      <div class="m-row">
-        <div class="m-group"><label>Phone</label><input type="tel" id="m-phone"/></div>
-        <div class="m-group"><label>Company</label><input type="text" id="m-company"/></div>
-      </div>
-      <div class="m-row">
-        <div class="m-group"><label>Vehicle Reg. Number</label><input type="text" id="m-vehicle-reg" style="text-transform:uppercase"/></div>
-        <div class="m-group"><label>Make / Model</label><input type="text" id="m-vehicle-model"/></div>
-      </div>
-      <div class="m-row full">
-        <div class="m-group"><label>Vehicle Owner</label><input type="text" id="m-owner-name"/></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
-      <button class="modal-btn primary" onclick="saveEditModal()">Save Changes</button>
     </div>
   </div>
-</div>
 
-<script>
-// ── Session check — redirect to login if not logged in ──
-const _userData = JSON.parse(sessionStorage.getItem('autovision_user') || 'null');
-if (!_userData) {
-  window.location.href = 'login.html';
-}
-
-// ── Populate user info in navbar ──
-if (_userData) {
-  document.addEventListener('DOMContentLoaded', () => {
-    const badge  = document.getElementById('user-badge');
-    const avatar = document.getElementById('user-avatar');
-    const name   = document.getElementById('user-name');
-    if (badge && avatar && name) {
-      const initials = _userData.fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-      avatar.textContent = initials;
-      name.textContent   = _userData.fullname;
-      badge.style.display = 'flex';
+  <script>
+    // ── Theme toggle logic ────────────────────────────
+    function getTheme() {
+      return localStorage.getItem('autovision_theme') || 'dark';
     }
-  });
-}
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('autovision_theme', theme);
+    }
+    function toggleTheme() {
+      const next = getTheme() === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    }
+    // Apply saved theme immediately
+    applyTheme(getTheme());
 
-function logoutUser() {
-  sessionStorage.removeItem('autovision_user');
-  window.location.href = 'login.html';
-}
+    // ── Session check — redirect to login if not logged in ──
+    const _userData = JSON.parse(sessionStorage.getItem('autovision_user') || 'null');
+    if (!_userData) {
+      window.location.href = 'login.html';
+    }
 
-// ── Colour palette per class ──────────────────────
-const CLASS_COLORS = {
-  'dent':          { stroke: '#ef4444', fill: 'rgba(239,68,68,0.15)',  badge: 'high',   icon: '⚠' },
-  'scratch':       { stroke: '#f59e0b', fill: 'rgba(245,158,11,0.15)', badge: 'medium', icon: 'ℹ' },
-  'crack':         { stroke: '#a78bfa', fill: 'rgba(167,139,250,0.15)',badge: 'high',   icon: '⚠' },
-  'glass shatter': { stroke: '#0ea5e9', fill: 'rgba(14,165,233,0.15)', badge: 'high',   icon: '⚠' },
-  'tire flat':     { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)',  badge: 'low',    icon: 'ℹ' },
-  'lamp broken':   { stroke: '#f97316', fill: 'rgba(249,115,22,0.15)', badge: 'medium', icon: 'ℹ' },
-};
-const CHART_COLORS = ['#00d4aa','#0ea5e9','#a78bfa','#f59e0b','#ef4444','#22c55e'];
-const BASE_COST = { dent:6500, scratch:3500, crack:9000, 'glass shatter':16000, 'tire flat':4500, 'lamp broken':7000 };
+    // ── Populate user info in navbar ──
+    if (_userData) {
+      document.addEventListener('DOMContentLoaded', () => {
+        const badge = document.getElementById('user-badge');
+        const avatar = document.getElementById('user-avatar');
+        const name = document.getElementById('user-name');
+        if (badge && avatar && name) {
+          const initials = _userData.fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+          avatar.textContent = initials;
+          name.textContent = _userData.fullname;
+          badge.style.display = 'flex';
+        }
+      });
+    }
 
-// ── State ─────────────────────────────────────────
-let allDetections = [];
-let donutChart    = null;
-// let confThreshold = 50;
-const confThreshold = 35;  // hardcoded 35% minimum confidence
+    function logoutUser() {
+      sessionStorage.removeItem('autovision_user');
+      window.location.href = 'login.html';
+    }
 
-// ── Demo detections (used when no real API) ───────
-function mockDetections(imgW, imgH) {
-  return [
-    { class:'dent',    confidence:0.92, bbox:[Math.round(imgW*0.12), Math.round(imgH*0.48), Math.round(imgW*0.38), Math.round(imgH*0.78)] },
-    { class:'scratch', confidence:0.78, bbox:[Math.round(imgW*0.48), Math.round(imgH*0.30), Math.round(imgW*0.78), Math.round(imgH*0.58)] },
-  ];
-}
+    // ── Colour palette per class ──────────────────────
+    const CLASS_COLORS = {
+      'dent': { stroke: '#ef4444', fill: 'rgba(239,68,68,0.15)', badge: 'high', icon: '⚠' },
+      'scratch': { stroke: '#f59e0b', fill: 'rgba(245,158,11,0.15)', badge: 'medium', icon: 'ℹ' },
+      'crack': { stroke: '#a78bfa', fill: 'rgba(167,139,250,0.15)', badge: 'high', icon: '⚠' },
+      'glass shatter': { stroke: '#0ea5e9', fill: 'rgba(14,165,233,0.15)', badge: 'high', icon: '⚠' },
+      'tire flat': { stroke: '#22c55e', fill: 'rgba(34,197,94,0.15)', badge: 'low', icon: 'ℹ' },
+      'lamp broken': { stroke: '#f97316', fill: 'rgba(249,115,22,0.15)', badge: 'medium', icon: 'ℹ' },
+    };
+    const CHART_COLORS = ['#00d4aa', '#0ea5e9', '#a78bfa', '#f59e0b', '#ef4444', '#22c55e'];
+    const BASE_COST = { dent: 6500, scratch: 3500, crack: 9000, 'glass shatter': 16000, 'tire flat': 4500, 'lamp broken': 7000 };
 
-// ── DOM refs ──────────────────────────────────────
-const dropZone   = document.getElementById('drop-zone');
-const fileInput  = document.getElementById('file-input');
-const imgResult  = document.getElementById('img-result');
-const canvas     = document.getElementById('annotation-canvas');
-const ctx        = canvas.getContext('2d');
-const uploadedImg= document.getElementById('uploaded-img');
-const scanLine   = document.getElementById('scan-line');
-const loading    = document.getElementById('loading-overlay');
+    // ── State ─────────────────────────────────────────
+    let allDetections = [];
+    let donutChart = null;
+    // let confThreshold = 50;
+    const confThreshold = 35;  // hardcoded 35% minimum confidence
 
-// ── Drag & drop events ────────────────────────────
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
-dropZone.addEventListener('click', e => { if(e.target !== dropZone.querySelector('label')) fileInput.click(); });
+    // ── Demo detections (used when no real API) ───────
+    function mockDetections(imgW, imgH) {
+      return [
+        { class: 'dent', confidence: 0.92, bbox: [Math.round(imgW * 0.12), Math.round(imgH * 0.48), Math.round(imgW * 0.38), Math.round(imgH * 0.78)] },
+        { class: 'scratch', confidence: 0.78, bbox: [Math.round(imgW * 0.48), Math.round(imgH * 0.30), Math.round(imgW * 0.78), Math.round(imgH * 0.58)] },
+      ];
+    }
 
-// ── File handler ──────────────────────────────────
-function handleFile(file) {
-  if (!file) return;
-  if (!file.type.startsWith('image/')) { showError('Please upload an image file (PNG, JPG, WEBP).'); return; }
-  if (file.size > 10 * 1024 * 1024)    { showError('File too large. Max 10 MB.'); return; }
+    // ── DOM refs ──────────────────────────────────────
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const imgResult = document.getElementById('img-result');
+    const canvas = document.getElementById('annotation-canvas');
+    const ctx = canvas.getContext('2d');
+    const uploadedImg = document.getElementById('uploaded-img');
+    const scanLine = document.getElementById('scan-line');
+    const loading = document.getElementById('loading-overlay');
 
-  const url = URL.createObjectURL(file);
-  uploadedImg.src = url;
-  uploadedImg.onload = () => {
-    dropZone.style.display   = 'none';
-    imgResult.style.display  = 'block';
-    canvas.width  = uploadedImg.naturalWidth;
-    canvas.height = uploadedImg.naturalHeight;
-    ctx.drawImage(uploadedImg, 0, 0);
-    runPipeline(uploadedImg, file);
-  };
-}
+    // ── Drag & drop events ────────────────────────────
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+    dropZone.addEventListener('click', e => { if (e.target !== dropZone.querySelector('label')) fileInput.click(); });
 
-// ── Pipeline: loading steps → detections ─────────
-async function runPipeline(img, file) {
-  loading.classList.add('active');
+    // ── File handler ──────────────────────────────────
+    function handleFile(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showError('Please upload an image file (PNG, JPG, WEBP).'); return; }
+      if (file.size > 10 * 1024 * 1024) { showError('File too large. Max 10 MB.'); return; }
 
-  // Start real API call immediately, run loading animation concurrently
-  const fd = new FormData(); 
-  fd.append('file', file);
-  if (_userData) {
-    fd.append('car_model', _userData.vehicleModel || 'Swift');
-    fd.append('car_age', _userData.carAge || '3');
-    fd.append('km_driven', _userData.kmDriven || '40000');
-  } else {
-    fd.append('car_model', 'Swift');
-    fd.append('car_age', '3');
-    fd.append('km_driven', '40000');
-  }
-  const apiPromise = fetch('http://localhost:8000/predict', { method:'POST', body: fd });
+      const url = URL.createObjectURL(file);
+      uploadedImg.src = url;
+      uploadedImg.onload = () => {
+        dropZone.style.display = 'none';
+        imgResult.style.display = 'block';
+        canvas.width = uploadedImg.naturalWidth;
+        canvas.height = uploadedImg.naturalHeight;
+        ctx.drawImage(uploadedImg, 0, 0);
+        runPipeline(uploadedImg, file);
+      };
+    }
 
-  const steps = [0,1,2,3,4];
-  for (let i = 0; i < steps.length; i++) {
-    const el = document.getElementById('step-' + i);
-    el.classList.add('active');
-    el.querySelector('.step-dot').classList.add('spin');
-    await delay(500 + Math.random() * 300);
-    el.classList.remove('active');
-    el.classList.add('done');
-    el.querySelector('.step-dot').classList.remove('spin');
-  }
+    // ── Pipeline: loading steps → detections ─────────
+    async function runPipeline(img, file) {
+      loading.classList.add('active');
 
-  // Wait for API response
-  let detections;
-  let apiData = null;
-  try {
-    const res = await apiPromise;
-    if (!res.ok) throw new Error('API returned ' + res.status);
-    apiData = await res.json();
-    // Map backend response fields to the format the UI expects
-    detections = (apiData.detections || []).map(d => ({
-      // old field: class — new field from backend: class_name
-      // class: d.class,
-      class: d.class_name,
-      confidence: d.confidence,
-      // old field: bbox — new field from backend: bbox_pixels
-      // bbox: d.bbox,
-      bbox: d.bbox_pixels,
-      severity: d.severity,
-      cost_min: d.cost_min,
-      cost_max: d.cost_max,
-      class_id: d.class_id,
-      area_norm: d.area_norm,
-    }));
-  } catch(err) {
-    showError('Backend error: ' + err.message + '. Using mock data.');
-    detections = mockDetections(img.naturalWidth, img.naturalHeight);
-  }
+      // Start real API call immediately, run loading animation concurrently
+      const fd = new FormData();
+      fd.append('file', file);
+      if (_userData) {
+        fd.append('car_model', _userData.vehicleModel || 'Swift');
+        fd.append('car_age', _userData.carAge || '3');
+        fd.append('km_driven', _userData.kmDriven || '40000');
+      } else {
+        fd.append('car_model', 'Swift');
+        fd.append('car_age', '3');
+        fd.append('km_driven', '40000');
+      }
+      const apiPromise = fetch('http://localhost:8000/predict', { method: 'POST', body: fd });
 
-  loading.classList.remove('active');
+      const steps = [0, 1, 2, 3, 4];
+      for (let i = 0; i < steps.length; i++) {
+        const el = document.getElementById('step-' + i);
+        el.classList.add('active');
+        el.querySelector('.step-dot').classList.add('spin');
+        await delay(500 + Math.random() * 300);
+        el.classList.remove('active');
+        el.classList.add('done');
+        el.querySelector('.step-dot').classList.remove('spin');
+      }
 
-  // Store the raw API response for cost/summary usage
-  window._apiData = apiData;
-  // Filter: only keep detections with confidence >= 35%
-  detections = detections.filter(d => d.confidence * 100 >= 35);
-  allDetections = detections;
-  displayResults(detections, img);
-}
+      // Wait for API response
+      let detections;
+      let apiData = null;
+      try {
+        const res = await apiPromise;
+        if (!res.ok) throw new Error('API returned ' + res.status);
+        apiData = await res.json();
+        // Map backend response fields to the format the UI expects
+        detections = (apiData.detections || []).map(d => ({
+          // old field: class — new field from backend: class_name
+          // class: d.class,
+          class: d.class_name,
+          confidence: d.confidence,
+          // old field: bbox — new field from backend: bbox_pixels
+          // bbox: d.bbox,
+          bbox: d.bbox_pixels,
+          severity: d.severity,
+          cost_min: d.cost_min,
+          cost_max: d.cost_max,
+          class_id: d.class_id,
+          area_norm: d.area_norm,
+        }));
+      } catch (err) {
+        showError('Backend error: ' + err.message + '. Using mock data.');
+        detections = mockDetections(img.naturalWidth, img.naturalHeight);
+      }
 
-// ── Draw boxes on canvas ──────────────────────────
-function drawBoxes(detections, img) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, 0, 0);
+      loading.classList.remove('active');
 
-  detections.forEach(det => {
-    if (det.confidence * 100 < 35) return;  // only show detections with >= 35% confidence
-    const [x1, y1, x2, y2] = det.bbox;
-    const w = x2 - x1, h = y2 - y1;
-    // const col = CLASS_COLORS[det.cls || det.class] || CLASS_COLORS['scratch'];
-    const col = CLASS_COLORS[det.class] || CLASS_COLORS['scratch'];
+      // Store the raw API response for cost/summary usage
+      window._apiData = apiData;
+      // Filter: only keep detections with confidence >= 35%
+      detections = detections.filter(d => d.confidence * 100 >= 35);
+      allDetections = detections;
+      displayResults(detections, img);
+    }
 
-    // Fill
-    ctx.fillStyle = col.fill;
-    ctx.fillRect(x1, y1, w, h);
+    // ── Draw boxes on canvas ──────────────────────────
+    function drawBoxes(detections, img) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
 
-    // Border
-    ctx.strokeStyle = col.stroke;
-    ctx.lineWidth   = Math.max(2, canvas.width * 0.003);
-    ctx.strokeRect(x1, y1, w, h);
+      detections.forEach(det => {
+        if (det.confidence * 100 < 35) return;  // only show detections with >= 35% confidence
+        const [x1, y1, x2, y2] = det.bbox;
+        const w = x2 - x1, h = y2 - y1;
+        // const col = CLASS_COLORS[det.cls || det.class] || CLASS_COLORS['scratch'];
+        const col = CLASS_COLORS[det.class] || CLASS_COLORS['scratch'];
 
-    // Corner ticks
-    const t = Math.min(w, h) * 0.18;
-    ctx.lineWidth = Math.max(3, canvas.width * 0.004);
-    [[x1,y1,1,1],[x2,y1,-1,1],[x1,y2,1,-1],[x2,y2,-1,-1]].forEach(([cx,cy,dx,dy]) => {
-      ctx.beginPath(); ctx.moveTo(cx+dx*t,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+dy*t); ctx.stroke();
-    });
+        // Fill
+        ctx.fillStyle = col.fill;
+        ctx.fillRect(x1, y1, w, h);
 
-    // Label box
-    // const cls  = (det.cls || det.class || '').replace(/_/g,' ');
-    const cls  = (det.class || '').replace(/_/g,' ');
-    const pct  = Math.round(det.confidence * 100);
-    const text = cls.toUpperCase() + '  ' + pct + '%';
-    const fs   = Math.max(11, Math.min(16, canvas.width * 0.022));
-    ctx.font = `600 ${fs}px 'DM Mono', monospace`;
-    const tw = ctx.measureText(text).width;
-    const lh = fs + 8, lw = tw + 18;
-    const lx = x1, ly = y1 - lh - 2 < 2 ? y1 + 2 : y1 - lh - 2;
-    ctx.fillStyle = col.stroke;
-    roundRect(ctx, lx, ly, lw, lh, 4);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.fillText(text, lx + 9, ly + lh - 5);
-  });
-}
+        // Border
+        ctx.strokeStyle = col.stroke;
+        ctx.lineWidth = Math.max(2, canvas.width * 0.003);
+        ctx.strokeRect(x1, y1, w, h);
 
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
-}
+        // Corner ticks
+        const t = Math.min(w, h) * 0.18;
+        ctx.lineWidth = Math.max(3, canvas.width * 0.004);
+        [[x1, y1, 1, 1], [x2, y1, -1, 1], [x1, y2, 1, -1], [x2, y2, -1, -1]].forEach(([cx, cy, dx, dy]) => {
+          ctx.beginPath(); ctx.moveTo(cx + dx * t, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + dy * t); ctx.stroke();
+        });
 
-// ── Populate all UI sections ──────────────────────
-function displayResults(detections, img) {
-  drawBoxes(detections, img);
+        // Label box
+        // const cls  = (det.cls || det.class || '').replace(/_/g,' ');
+        const cls = (det.class || '').replace(/_/g, ' ');
+        const pct = Math.round(det.confidence * 100);
+        const text = cls.toUpperCase() + '  ' + pct + '%';
+        const fs = Math.max(11, Math.min(16, canvas.width * 0.022));
+        ctx.font = `600 ${fs}px 'DM Mono', monospace`;
+        const tw = ctx.measureText(text).width;
+        const lh = fs + 8, lw = tw + 18;
+        const lx = x1, ly = y1 - lh - 2 < 2 ? y1 + 2 : y1 - lh - 2;
+        ctx.fillStyle = col.stroke;
+        roundRect(ctx, lx, ly, lw, lh, 4);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.fillText(text, lx + 9, ly + lh - 5);
+      });
+    }
 
-  // Scan effect + brackets
-  scanLine.classList.remove('active');
-  void scanLine.offsetWidth;
-  scanLine.classList.add('active');
-  ['br-tl','br-tr','br-bl','br-br'].forEach(id => document.getElementById(id).classList.add('show'));
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+    }
 
-  // Show UI elements
-  // document.getElementById('conf-row').style.display   = 'flex'; // disabled — hardcoded 35%
-  document.getElementById('action-row').style.display = 'flex';
-  document.getElementById('img-status').textContent   = detections.length + ' detection' + (detections.length!==1?'s':'') + ' found';
+    // ── Populate all UI sections ──────────────────────
+    function displayResults(detections, img) {
+      drawBoxes(detections, img);
 
-  // Stats
-  const total = detections.length;
-  animateCount('stat-count', 0, total, 600);
-  document.getElementById('stat-count-sub').textContent = total === 0 ? 'no damage detected' : 'damage region' + (total!==1?'s':'') + ' identified';
+      // Scan effect + brackets
+      scanLine.classList.remove('active');
+      void scanLine.offsetWidth;
+      scanLine.classList.add('active');
+      ['br-tl', 'br-tr', 'br-bl', 'br-br'].forEach(id => document.getElementById(id).classList.add('show'));
 
-  // Use real cost data from backend API response if available
-  // const costs = detections.map(d => BASE_COST[d.cls||d.class] || 5000);
-  // const totalMin = costs.reduce((a,b)=>a+b,0);
-  // const totalMax = Math.round(totalMin * 1.35);
-  const apiData = window._apiData;
-  const totalMin = apiData ? apiData.total_cost_min : detections.reduce((s,d) => s + (d.cost_min || (BASE_COST[d.class] || 5000)), 0);
-  const totalMax = apiData ? apiData.total_cost_max : Math.round(totalMin * 1.35);
-  setTimeout(() => {
-    document.getElementById('stat-cost').textContent = '₹' + totalMin.toLocaleString();
-    document.getElementById('stat-cost-sub').textContent = '— ₹' + totalMax.toLocaleString();
-  }, 400);
+      // Show UI elements
+      // document.getElementById('conf-row').style.display   = 'flex'; // disabled — hardcoded 35%
+      document.getElementById('action-row').style.display = 'flex';
+      document.getElementById('img-status').textContent = detections.length + ' detection' + (detections.length !== 1 ? 's' : '') + ' found';
 
-  // Severity gauge
-  const sev   = total === 0 ? 0 : Math.min(1, totalMin / 50000);
-  const label = total === 0 ? 'None' : sev < 0.3 ? 'Low' : sev < 0.65 ? 'Medium' : 'High';
-  const col   = sev < 0.3 ? '#22c55e' : sev < 0.65 ? '#f59e0b' : '#ef4444';
-  const arc   = document.getElementById('gauge-arc');
-  const gtxt  = document.getElementById('gauge-text');
-  setTimeout(() => {
-    arc.style.stroke = col;
-    arc.style.strokeDashoffset = 101 - (sev * 101);
-    gtxt.textContent = label;
-    gtxt.setAttribute('fill', col);
-  }, 300);
+      // Stats
+      const total = detections.length;
+      animateCount('stat-count', 0, total, 600);
+      document.getElementById('stat-count-sub').textContent = total === 0 ? 'no damage detected' : 'damage region' + (total !== 1 ? 's' : '') + ' identified';
 
-  // Feed
-  renderFeed(detections);
+      // Use real cost data from backend API response if available
+      // const costs = detections.map(d => BASE_COST[d.cls||d.class] || 5000);
+      // const totalMin = costs.reduce((a,b)=>a+b,0);
+      // const totalMax = Math.round(totalMin * 1.35);
+      const apiData = window._apiData;
+      const totalMin = apiData ? apiData.total_cost_min : detections.reduce((s, d) => s + (d.cost_min || (BASE_COST[d.class] || 5000)), 0);
+      const totalMax = apiData ? apiData.total_cost_max : Math.round(totalMin * 1.35);
+      setTimeout(() => {
+        document.getElementById('stat-cost').textContent = '₹' + totalMin.toLocaleString();
+        document.getElementById('stat-cost-sub').textContent = '— ₹' + totalMax.toLocaleString();
+      }, 400);
 
-  // Distribution bar
-  renderDistBar(detections);
+      // Severity gauge
+      const sev = total === 0 ? 0 : Math.min(1, totalMin / 50000);
+      const label = total === 0 ? 'None' : sev < 0.3 ? 'Low' : sev < 0.65 ? 'Medium' : 'High';
+      const col = sev < 0.3 ? '#22c55e' : sev < 0.65 ? '#f59e0b' : '#ef4444';
+      const arc = document.getElementById('gauge-arc');
+      const gtxt = document.getElementById('gauge-text');
+      setTimeout(() => {
+        arc.style.stroke = col;
+        arc.style.strokeDashoffset = 101 - (sev * 101);
+        gtxt.textContent = label;
+        gtxt.setAttribute('fill', col);
+      }, 300);
 
-  // Donut
-  renderDonut(detections);
-}
+      // Feed
+      renderFeed(detections);
 
-// ── Feed ──────────────────────────────────────────
-function renderFeed(detections) {
-  const list = document.getElementById('feed-list');
-  if (detections.length === 0) {
-    list.innerHTML = '<div class="feed-empty"><div class="feed-empty-icon">✅</div>No damage detected.</div>';
-    return;
-  }
-  document.getElementById('feed-count-label').textContent = detections.length + ' item' + (detections.length!==1?'s':'');
-  list.innerHTML = '';
-  detections.forEach((det, i) => {
-    // const cls   = det.cls || det.class || 'unknown';
-    const cls   = det.class || 'unknown';
-    const conf  = Math.round(det.confidence * 100);
-    const col   = CLASS_COLORS[cls] || CLASS_COLORS['scratch'];
-    // Use real cost from backend if available, otherwise fall back to BASE_COST
-    // const cost  = BASE_COST[cls] || 5000;
-    // const costMax = Math.round(cost * 1.4);
-    const cost    = det.cost_min || BASE_COST[cls] || 5000;
-    const costMax = det.cost_max || Math.round(cost * 1.4);
-    const item  = document.createElement('div');
-    item.className = 'feed-item';
-    item.style.animationDelay = (i * 0.08) + 's';
-    const barColor = conf >= 80 ? '#22c55e' : conf >= 60 ? '#f59e0b' : '#ef4444';
-    item.innerHTML = `
+      // Distribution bar
+      renderDistBar(detections);
+
+      // Donut
+      renderDonut(detections);
+    }
+
+    // ── Feed ──────────────────────────────────────────
+    function renderFeed(detections) {
+      const list = document.getElementById('feed-list');
+      if (detections.length === 0) {
+        list.innerHTML = '<div class="feed-empty"><div class="feed-empty-icon">✅</div>No damage detected.</div>';
+        return;
+      }
+      document.getElementById('feed-count-label').textContent = detections.length + ' item' + (detections.length !== 1 ? 's' : '');
+      list.innerHTML = '';
+      detections.forEach((det, i) => {
+        // const cls   = det.cls || det.class || 'unknown';
+        const cls = det.class || 'unknown';
+        const conf = Math.round(det.confidence * 100);
+        const col = CLASS_COLORS[cls] || CLASS_COLORS['scratch'];
+        // Use real cost from backend if available, otherwise fall back to BASE_COST
+        // const cost  = BASE_COST[cls] || 5000;
+        // const costMax = Math.round(cost * 1.4);
+        const cost = det.cost_min || BASE_COST[cls] || 5000;
+        const costMax = det.cost_max || Math.round(cost * 1.4);
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        item.style.animationDelay = (i * 0.08) + 's';
+        const barColor = conf >= 80 ? '#22c55e' : conf >= 60 ? '#f59e0b' : '#ef4444';
+        item.innerHTML = `
       <div class="feed-ico ${col.badge}"><span style="font-size:14px">${col.icon}</span></div>
       <div class="feed-body">
         <div class="feed-top">
-          <span class="feed-name">${cls.replace(/\b\w/g,c=>c.toUpperCase())}</span>
+          <span class="feed-name">${cls.replace(/\b\w/g, c => c.toUpperCase())}</span>
           <span class="sev-badge ${col.badge}">${col.badge}</span>
         </div>
         <div class="feed-bottom">
@@ -974,535 +2013,538 @@ function renderFeed(detections) {
           </div>
         </div>
       </div>`;
-    list.appendChild(item);
-    setTimeout(() => { item.querySelector('.conf-bar-fill').style.width = conf + '%'; }, 100 + i * 80);
-    item.addEventListener('click', () => highlightDetection(i));
-  });
-}
-
-// ── Highlight box on click ────────────────────────
-function highlightDetection(idx) {
-  const img = uploadedImg;
-  const det = allDetections[idx];
-  if (!det || !det.bbox) return;
-  drawBoxes(allDetections, img);
-  const [x1,y1,x2,y2] = det.bbox;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 4;
-  ctx.shadowColor = '#ffffff';
-  ctx.shadowBlur  = 20;
-  ctx.strokeRect(x1-2, y1-2, x2-x1+4, y2-y1+4);
-  ctx.shadowBlur = 0;
-}
-
-// ── Distribution bar ──────────────────────────────
-function renderDistBar(detections) {
-  const counts = {};
-  // detections.forEach(d => { const c = d.cls||d.class; counts[c]=(counts[c]||0)+1; });
-  detections.forEach(d => { const c = d.class; counts[c]=(counts[c]||0)+1; });
-  const total = detections.length || 1;
-  const colors = Object.values(CLASS_COLORS).map(c=>c.stroke);
-  const bar    = document.getElementById('dist-bar');
-  const legend = document.getElementById('dist-legend');
-  bar.innerHTML = '';
-  legend.innerHTML = '';
-  if (detections.length === 0) {
-    bar.innerHTML = '<div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>';
-    legend.innerHTML = '<div class="dist-leg-item"><div class="dist-leg-dot" style="background:var(--muted)"></div><span>No data</span></div>';
-    return;
-  }
-  let ci = 0;
-  for (const [cls, cnt] of Object.entries(counts)) {
-    const seg = document.createElement('div');
-    seg.className = 'dist-seg';
-    seg.style.flex = '0';
-    seg.style.background = (CLASS_COLORS[cls]||{}).stroke || colors[ci%colors.length];
-    seg.style.minWidth = '4px';
-    bar.appendChild(seg);
-    setTimeout(() => seg.style.flex = cnt, 50);
-    const li = document.createElement('div');
-    li.className = 'dist-leg-item';
-    li.innerHTML = `<div class="dist-leg-dot" style="background:${(CLASS_COLORS[cls]||{}).stroke||colors[ci%colors.length]}"></div><span>${cls} (${cnt})</span>`;
-    legend.appendChild(li);
-    ci++;
-  }
-}
-
-// ── Confidence slider (disabled — hardcoded 35%) ──
-// function onConfSlider(val) {
-//   confThreshold = parseInt(val);
-//   document.getElementById('conf-val').textContent = val + '%';
-//   const pct = val + '%';
-//   document.getElementById('conf-slider').style.setProperty('--pct', pct);
-//   if (uploadedImg.src) drawBoxes(allDetections, uploadedImg);
-//   renderFeed(allDetections.filter(d => d.confidence * 100 >= confThreshold));
-// }
-
-// ── Edit profile modal ─────────────────────
-function openEditModal() {
-  const user = JSON.parse(sessionStorage.getItem('autovision_user') || '{}');
-  document.getElementById('m-fullname').value      = user.fullname || '';
-  document.getElementById('m-email').value         = user.email || '';
-  document.getElementById('m-phone').value         = user.phone || '';
-  document.getElementById('m-company').value       = user.company || '';
-  document.getElementById('m-vehicle-reg').value   = user.vehicleReg || '';
-  document.getElementById('m-vehicle-model').value = user.vehicleModel || '';
-  document.getElementById('m-owner-name').value    = user.ownerName || '';
-  document.getElementById('edit-modal').classList.add('active');
-}
-
-function closeEditModal() {
-  document.getElementById('edit-modal').classList.remove('active');
-}
-
-function saveEditModal() {
-  const fullname = document.getElementById('m-fullname').value.trim();
-  if (!fullname) { showError('Name is required.'); return; }
-  const vehicleReg = document.getElementById('m-vehicle-reg').value.trim().toUpperCase();
-  if (!vehicleReg) { showError('Vehicle registration is required.'); return; }
-
-  const updated = {
-    fullname,
-    email:        document.getElementById('m-email').value.trim(),
-    phone:        document.getElementById('m-phone').value.trim(),
-    company:      document.getElementById('m-company').value.trim(),
-    vehicleReg,
-    vehicleModel: document.getElementById('m-vehicle-model').value.trim(),
-    ownerName:    document.getElementById('m-owner-name').value.trim(),
-    loginTime:    (_userData || {}).loginTime || new Date().toISOString(),
-  };
-  sessionStorage.setItem('autovision_user', JSON.stringify(updated));
-
-  // Update navbar
-  const initials = fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('user-avatar').textContent = initials;
-  document.getElementById('user-name').textContent   = fullname;
-
-  closeEditModal();
-  showError('Profile updated successfully!');
-}
-
-// ── Donut chart ───────────────────────────────────
-function renderDonut(detections) {
-  const legend = document.getElementById('chart-legend');
-  if (detections.length === 0) {
-    legend.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>';
-    if (donutChart) { donutChart.destroy(); donutChart = null; }
-    return;
-  }
-
-  // const classes = [...new Set(detections.map(d=>d.cls||d.class))];
-  const classes = [...new Set(detections.map(d=>d.class))];
-  const costs   = classes.map(c => {
-    // Use real cost data from backend per detection if available
-    // const n = detections.filter(d=>(d.cls||d.class)===c).length;
-    // return (BASE_COST[c]||5000)*n;
-    const matching = detections.filter(d=>d.class===c);
-    return matching.reduce((sum,d) => sum + (d.cost_min || (BASE_COST[c]||5000)), 0);
-  });
-  const total = costs.reduce((a,b)=>a+b,0);
-  const cols  = classes.map(c=>(CLASS_COLORS[c]||{}).stroke||'#aaa');
-
-  if (donutChart) donutChart.destroy();
-  const dctx = document.getElementById('donut-chart').getContext('2d');
-  donutChart = new Chart(dctx, {
-    type: 'doughnut',
-    data: { labels: classes, datasets: [{ data: costs, backgroundColor: cols, borderColor: '#0f1520', borderWidth: 3, hoverOffset: 4 }] },
-    options: {
-      cutout: '68%', responsive: false, plugins: { legend:{display:false}, tooltip:{
-        callbacks: { label: ctx => ' ₹' + ctx.parsed.toLocaleString() },
-        backgroundColor:'rgba(0,0,0,0.8)', titleFont:{family:'DM Mono'}, bodyFont:{family:'DM Mono'},
-      }},
-      animation: { animateRotate: true, duration: 800 },
+        list.appendChild(item);
+        setTimeout(() => { item.querySelector('.conf-bar-fill').style.width = conf + '%'; }, 100 + i * 80);
+        item.addEventListener('click', () => highlightDetection(i));
+      });
     }
-  });
 
-  legend.innerHTML = '';
-  classes.forEach((c, i) => {
-    const pct = total > 0 ? Math.round((costs[i]/total)*100) : 0;
-    const row = document.createElement('div');
-    row.className = 'chart-leg-row';
-    row.innerHTML = `<div class="chart-leg-left"><div class="chart-leg-dot" style="background:${cols[i]}"></div><span class="chart-leg-name">${c}</span></div><span class="chart-leg-pct">${pct}%</span>`;
-    legend.appendChild(row);
-  });
-}
+    // ── Highlight box on click ────────────────────────
+    function highlightDetection(idx) {
+      const img = uploadedImg;
+      const det = allDetections[idx];
+      if (!det || !det.bbox) return;
+      drawBoxes(allDetections, img);
+      const [x1, y1, x2, y2] = det.bbox;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 20;
+      ctx.strokeRect(x1 - 2, y1 - 2, x2 - x1 + 4, y2 - y1 + 4);
+      ctx.shadowBlur = 0;
+    }
 
-// ── Confidence slider ─────────────────────────────
-function onConfSlider(val) {
-  confThreshold = parseInt(val);
-  document.getElementById('conf-val').textContent = val + '%';
-  const pct = val + '%';
-  document.getElementById('conf-slider').style.setProperty('--pct', pct);
-  if (uploadedImg.src) drawBoxes(allDetections, uploadedImg);
-  renderFeed(allDetections.filter(d => d.confidence * 100 >= confThreshold));
-}
+    // ── Distribution bar ──────────────────────────────
+    function renderDistBar(detections) {
+      const counts = {};
+      // detections.forEach(d => { const c = d.cls||d.class; counts[c]=(counts[c]||0)+1; });
+      detections.forEach(d => { const c = d.class; counts[c] = (counts[c] || 0) + 1; });
+      const total = detections.length || 1;
+      const colors = Object.values(CLASS_COLORS).map(c => c.stroke);
+      const bar = document.getElementById('dist-bar');
+      const legend = document.getElementById('dist-legend');
+      bar.innerHTML = '';
+      legend.innerHTML = '';
+      if (detections.length === 0) {
+        bar.innerHTML = '<div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>';
+        legend.innerHTML = '<div class="dist-leg-item"><div class="dist-leg-dot" style="background:var(--muted)"></div><span>No data</span></div>';
+        return;
+      }
+      let ci = 0;
+      for (const [cls, cnt] of Object.entries(counts)) {
+        const seg = document.createElement('div');
+        seg.className = 'dist-seg';
+        seg.style.flex = '0';
+        seg.style.background = (CLASS_COLORS[cls] || {}).stroke || colors[ci % colors.length];
+        seg.style.minWidth = '4px';
+        bar.appendChild(seg);
+        setTimeout(() => seg.style.flex = cnt, 50);
+        const li = document.createElement('div');
+        li.className = 'dist-leg-item';
+        li.innerHTML = `<div class="dist-leg-dot" style="background:${(CLASS_COLORS[cls] || {}).stroke || colors[ci % colors.length]}"></div><span>${cls} (${cnt})</span>`;
+        legend.appendChild(li);
+        ci++;
+      }
+    }
 
-// ── Reset ─────────────────────────────────────────
-function resetApp() {
-  // dropZone.style.display   = 'block';
-  dropZone.style.display   = 'flex';
-  imgResult.style.display  = 'none';
-  // document.getElementById('conf-row').style.display   = 'none'; // disabled
-  document.getElementById('action-row').style.display = 'none';
-  document.getElementById('img-status').textContent   = '— awaiting upload';
-  document.getElementById('stat-count').textContent   = '—';
-  document.getElementById('stat-count-sub').textContent = 'awaiting scan';
-  document.getElementById('stat-cost').textContent    = '—';
-  document.getElementById('stat-cost-sub').textContent = 'estimated repair';
-  document.getElementById('gauge-text').textContent   = '—';
-  document.getElementById('gauge-arc').style.strokeDashoffset = '101';
-  document.getElementById('feed-list').innerHTML = '<div class="feed-empty"><div class="feed-empty-icon">📡</div>No detections yet.<br/>Upload a car image to begin.</div>';
-  document.getElementById('feed-count-label').textContent = 'scrollable list';
-  document.getElementById('dist-bar').innerHTML = '<div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>';
-  document.getElementById('dist-legend').innerHTML = '<div class="dist-leg-item"><div class="dist-leg-dot" style="background:var(--muted)"></div><span>—</span></div>';
-  document.getElementById('chart-legend').innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>';
-  if (donutChart) { donutChart.destroy(); donutChart = null; }
-  ['br-tl','br-tr','br-bl','br-br'].forEach(id => document.getElementById(id).classList.remove('show'));
-  allDetections = [];
-  fileInput.value = '';
-  [...document.querySelectorAll('.loading-step')].forEach(el => { el.classList.remove('done','active'); el.querySelector('.step-dot').classList.remove('spin'); });
-  // confThreshold = 50;
-  // document.getElementById('conf-slider').value = 50;
-  // document.getElementById('conf-val').textContent = '50%';
-}
+    // ── Confidence slider (disabled — hardcoded 35%) ──
+    // function onConfSlider(val) {
+    //   confThreshold = parseInt(val);
+    //   document.getElementById('conf-val').textContent = val + '%';
+    //   const pct = val + '%';
+    //   document.getElementById('conf-slider').style.setProperty('--pct', pct);
+    //   if (uploadedImg.src) drawBoxes(allDetections, uploadedImg);
+    //   renderFeed(allDetections.filter(d => d.confidence * 100 >= confThreshold));
+    // }
 
-// ── Download report (OLD — text version, kept for reference) ──
-// function downloadReport() {
-//   const text = ['AutoVision — AI Damage Inspection Report','='.repeat(45),''];
-//   allDetections.forEach((d,i) => {
-//     const cls  = d.class;
-//     const conf = Math.round(d.confidence*100);
-//     const cost    = d.cost_min || BASE_COST[cls]||5000;
-//     const costMax = d.cost_max || Math.round(cost*1.4);
-//     text.push(`${i+1}. ${cls.toUpperCase()} — Confidence: ${conf}% — Severity: ${d.severity||'—'} — Est. ₹${cost.toLocaleString()}–₹${costMax.toLocaleString()}`);
-//   });
-//   text.push('','Generated by AutoVision AI Inspection');
-//   const blob = new Blob([text.join('\n')], {type:'text/plain'});
-//   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='AutoVision_Report.txt'; a.click();
-// }
+    // ── Edit profile modal ─────────────────────
+    function openEditModal() {
+      const user = JSON.parse(sessionStorage.getItem('autovision_user') || '{}');
+      document.getElementById('m-fullname').value = user.fullname || '';
+      document.getElementById('m-email').value = user.email || '';
+      document.getElementById('m-phone').value = user.phone || '';
+      document.getElementById('m-company').value = user.company || '';
+      document.getElementById('m-vehicle-reg').value = user.vehicleReg || '';
+      document.getElementById('m-vehicle-model').value = user.vehicleModel || '';
+      document.getElementById('m-owner-name').value = user.ownerName || '';
+      document.getElementById('edit-modal').classList.add('active');
+    }
 
-// ── Download report (PDF version) ─────────────────
-function downloadReport() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const margin = 18;
-  const contentW = pageW - margin * 2;
-  let y = margin;
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
 
-  // ── Colors ──
-  const PRIMARY   = [0, 212, 170];     // accent green
-  const DARK      = [15, 21, 32];      // dark bg
-  const TEXT_DARK  = [30, 30, 30];
-  const TEXT_MID   = [100, 100, 100];
-  const WHITE      = [255, 255, 255];
-  const SEV_COLORS = {
-    high:   [239, 68, 68],
-    medium: [245, 158, 11],
-    low:    [34, 197, 94],
-  };
+    function saveEditModal() {
+      const fullname = document.getElementById('m-fullname').value.trim();
+      if (!fullname) { showError('Name is required.'); return; }
+      const vehicleReg = document.getElementById('m-vehicle-reg').value.trim().toUpperCase();
+      if (!vehicleReg) { showError('Vehicle registration is required.'); return; }
 
-  // ── Helper: draw horizontal rule ──
-  function drawHR(yPos, color) {
-    doc.setDrawColor(...(color || [220,220,220]));
-    doc.setLineWidth(0.3);
-    doc.line(margin, yPos, pageW - margin, yPos);
-  }
+      const updated = {
+        fullname,
+        email: document.getElementById('m-email').value.trim(),
+        phone: document.getElementById('m-phone').value.trim(),
+        company: document.getElementById('m-company').value.trim(),
+        vehicleReg,
+        vehicleModel: document.getElementById('m-vehicle-model').value.trim(),
+        ownerName: document.getElementById('m-owner-name').value.trim(),
+        loginTime: (_userData || {}).loginTime || new Date().toISOString(),
+      };
+      sessionStorage.setItem('autovision_user', JSON.stringify(updated));
 
-  // ── Header bar ──
-  doc.setFillColor(...DARK);
-  doc.rect(0, 0, pageW, 36, 'F');
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...WHITE);
-  doc.text('AutoVision', margin, 16);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...PRIMARY);
-  doc.text('AI Damage Inspection Report', margin, 23);
+      // Update navbar
+      const initials = fullname.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      document.getElementById('user-avatar').textContent = initials;
+      document.getElementById('user-name').textContent = fullname;
 
-  // Date on the right
-  const dateStr = new Date().toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
-  const timeStr = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-  doc.setFontSize(8);
-  doc.setTextColor(180, 180, 180);
-  doc.text(dateStr + '  |  ' + timeStr, pageW - margin, 16, { align: 'right' });
-  doc.text('Report ID: AV-' + Date.now().toString(36).toUpperCase(), pageW - margin, 23, { align: 'right' });
+      closeEditModal();
+      showError('Profile updated successfully!');
+    }
 
-  y = 44;
+    // ── Donut chart ───────────────────────────────────
+    function renderDonut(detections) {
+      const legend = document.getElementById('chart-legend');
+      if (detections.length === 0) {
+        legend.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>';
+        if (donutChart) { donutChart.destroy(); donutChart = null; }
+        return;
+      }
 
-  // ── Inspector & Vehicle Details ──
-  const user = _userData || {};
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('Inspector & Vehicle Information', margin, y);
-  y += 6;
+      // const classes = [...new Set(detections.map(d=>d.cls||d.class))];
+      const classes = [...new Set(detections.map(d => d.class))];
+      const costs = classes.map(c => {
+        // Use real cost data from backend per detection if available
+        // const n = detections.filter(d=>(d.cls||d.class)===c).length;
+        // return (BASE_COST[c]||5000)*n;
+        const matching = detections.filter(d => d.class === c);
+        return matching.reduce((sum, d) => sum + (d.cost_min || (BASE_COST[c] || 5000)), 0);
+      });
+      const total = costs.reduce((a, b) => a + b, 0);
+      const cols = classes.map(c => (CLASS_COLORS[c] || {}).stroke || '#aaa');
 
-  // Details grid
-  const detailRows = [
-    ['Inspector Name', user.fullname || '-', 'Email', user.email || '-'],
-    ['Phone', user.phone || '-', 'Organisation', user.company || '-'],
-    ['Vehicle Reg. No.', user.vehicleReg || '-', 'Make / Model', user.vehicleModel || '-'],
-    ['Vehicle Owner', user.ownerName || '-', 'Inspection Date', dateStr + ' ' + timeStr],
-  ];
+      if (donutChart) donutChart.destroy();
+      const dctx = document.getElementById('donut-chart').getContext('2d');
+      donutChart = new Chart(dctx, {
+        type: 'doughnut',
+        data: { labels: classes, datasets: [{ data: costs, backgroundColor: cols, borderColor: '#0f1520', borderWidth: 3, hoverOffset: 4 }] },
+        options: {
+          cutout: '68%', responsive: false, plugins: {
+            legend: { display: false }, tooltip: {
+              callbacks: { label: ctx => ' ₹' + ctx.parsed.toLocaleString() },
+              backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { family: 'DM Mono' }, bodyFont: { family: 'DM Mono' },
+            }
+          },
+          animation: { animateRotate: true, duration: 800 },
+        }
+      });
 
-  const colLabelW = 32;
-  const colValW   = (contentW / 2) - colLabelW;
+      legend.innerHTML = '';
+      classes.forEach((c, i) => {
+        const pct = total > 0 ? Math.round((costs[i] / total) * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'chart-leg-row';
+        row.innerHTML = `<div class="chart-leg-left"><div class="chart-leg-dot" style="background:${cols[i]}"></div><span class="chart-leg-name">${c}</span></div><span class="chart-leg-pct">${pct}%</span>`;
+        legend.appendChild(row);
+      });
+    }
 
-  detailRows.forEach(row => {
-    // Left pair
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_MID);
-    doc.text(row[0] + ':', margin, y + 4);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...TEXT_DARK);
-    doc.text(row[1], margin + colLabelW, y + 4);
+    // ── Confidence slider ─────────────────────────────
+    function onConfSlider(val) {
+      confThreshold = parseInt(val);
+      document.getElementById('conf-val').textContent = val + '%';
+      const pct = val + '%';
+      document.getElementById('conf-slider').style.setProperty('--pct', pct);
+      if (uploadedImg.src) drawBoxes(allDetections, uploadedImg);
+      renderFeed(allDetections.filter(d => d.confidence * 100 >= confThreshold));
+    }
 
-    // Right pair
-    const rx = margin + contentW / 2 + 4;
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_MID);
-    doc.text(row[2] + ':', rx, y + 4);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...TEXT_DARK);
-    doc.text(row[3], rx + colLabelW, y + 4);
+    // ── Reset ─────────────────────────────────────────
+    function resetApp() {
+      // dropZone.style.display   = 'block';
+      dropZone.style.display = 'flex';
+      imgResult.style.display = 'none';
+      // document.getElementById('conf-row').style.display   = 'none'; // disabled
+      document.getElementById('action-row').style.display = 'none';
+      document.getElementById('img-status').textContent = '— awaiting upload';
+      document.getElementById('stat-count').textContent = '—';
+      document.getElementById('stat-count-sub').textContent = 'awaiting scan';
+      document.getElementById('stat-cost').textContent = '—';
+      document.getElementById('stat-cost-sub').textContent = 'estimated repair';
+      document.getElementById('gauge-text').textContent = '—';
+      document.getElementById('gauge-arc').style.strokeDashoffset = '101';
+      document.getElementById('feed-list').innerHTML = '<div class="feed-empty"><div class="feed-empty-icon">📡</div>No detections yet.<br/>Upload a car image to begin.</div>';
+      document.getElementById('feed-count-label').textContent = 'scrollable list';
+      document.getElementById('dist-bar').innerHTML = '<div class="dist-seg" style="flex:1;background:rgba(255,255,255,0.05)"></div>';
+      document.getElementById('dist-legend').innerHTML = '<div class="dist-leg-item"><div class="dist-leg-dot" style="background:var(--muted)"></div><span>—</span></div>';
+      document.getElementById('chart-legend').innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">— run a scan to populate</div>';
+      if (donutChart) { donutChart.destroy(); donutChart = null; }
+      ['br-tl', 'br-tr', 'br-bl', 'br-br'].forEach(id => document.getElementById(id).classList.remove('show'));
+      allDetections = [];
+      fileInput.value = '';
+      [...document.querySelectorAll('.loading-step')].forEach(el => { el.classList.remove('done', 'active'); el.querySelector('.step-dot').classList.remove('spin'); });
+      // confThreshold = 50;
+      // document.getElementById('conf-slider').value = 50;
+      // document.getElementById('conf-val').textContent = '50%';
+    }
 
-    y += 7;
-  });
+    // ── Download report (OLD — text version, kept for reference) ──
+    // function downloadReport() {
+    //   const text = ['AutoVision — AI Damage Inspection Report','='.repeat(45),''];
+    //   allDetections.forEach((d,i) => {
+    //     const cls  = d.class;
+    //     const conf = Math.round(d.confidence*100);
+    //     const cost    = d.cost_min || BASE_COST[cls]||5000;
+    //     const costMax = d.cost_max || Math.round(cost*1.4);
+    //     text.push(`${i+1}. ${cls.toUpperCase()} — Confidence: ${conf}% — Severity: ${d.severity||'—'} — Est. ₹${cost.toLocaleString()}–₹${costMax.toLocaleString()}`);
+    //   });
+    //   text.push('','Generated by AutoVision AI Inspection');
+    //   const blob = new Blob([text.join('\n')], {type:'text/plain'});
+    //   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='AutoVision_Report.txt'; a.click();
+    // }
 
-  y += 4;
-  drawHR(y, [220,220,220]);
-  y += 8;
+    // ── Download report (PDF version) ─────────────────
+    function downloadReport() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 18;
+      const contentW = pageW - margin * 2;
+      let y = margin;
 
-  // ── Summary section ──
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('Inspection Summary', margin, y);
-  y += 7;
+      // ── Colors ──
+      const PRIMARY = [0, 212, 170];     // accent green
+      const DARK = [15, 21, 32];      // dark bg
+      const TEXT_DARK = [30, 30, 30];
+      const TEXT_MID = [100, 100, 100];
+      const WHITE = [255, 255, 255];
+      const SEV_COLORS = {
+        high: [239, 68, 68],
+        medium: [245, 158, 11],
+        low: [34, 197, 94],
+      };
 
-  const apiData = window._apiData;
-  const totalMin = apiData ? apiData.total_cost_min : allDetections.reduce((s,d) => s + (d.cost_min || 5000), 0);
-  const totalMax = apiData ? apiData.total_cost_max : Math.round(totalMin * 1.35);
-  const highCount = allDetections.filter(d => d.severity === 'high').length;
-  const medCount  = allDetections.filter(d => d.severity === 'medium').length;
-  const lowCount  = allDetections.filter(d => d.severity === 'low').length;
+      // ── Helper: draw horizontal rule ──
+      function drawHR(yPos, color) {
+        doc.setDrawColor(...(color || [220, 220, 220]));
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos, pageW - margin, yPos);
+      }
 
-  // Summary cards row
-  const cardW = (contentW - 6) / 3;
-  const cards = [
-    { label: 'Total Damages',    value: String(allDetections.length), color: PRIMARY },
-    { label: 'Est. Repair Cost',  value: 'Rs.' + totalMin.toLocaleString('en-IN') + ' - Rs.' + totalMax.toLocaleString('en-IN'), color: [14,165,233] },
-    { label: 'Severity Breakdown', value: highCount + ' High / ' + medCount + ' Med / ' + lowCount + ' Low', color: [245,158,11] },
-  ];
+      // ── Header bar ──
+      doc.setFillColor(...DARK);
+      doc.rect(0, 0, pageW, 36, 'F');
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...WHITE);
+      doc.text('AutoVision', margin, 16);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...PRIMARY);
+      doc.text('AI Damage Inspection Report', margin, 23);
 
-  cards.forEach((card, i) => {
-    const cx = margin + i * (cardW + 3);
-    doc.setFillColor(248, 249, 250);
-    doc.roundedRect(cx, y, cardW, 22, 2, 2, 'F');
-    // Top accent line
-    doc.setFillColor(...card.color);
-    doc.rect(cx, y, cardW, 1.5, 'F');
-    // Label
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_MID);
-    doc.text(card.label.toUpperCase(), cx + 4, y + 7);
-    // Value
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...TEXT_DARK);
-    doc.text(card.value, cx + 4, y + 16);
-  });
-  y += 30;
+      // Date on the right
+      const dateStr = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      doc.setFontSize(8);
+      doc.setTextColor(180, 180, 180);
+      doc.text(dateStr + '  |  ' + timeStr, pageW - margin, 16, { align: 'right' });
+      doc.text('Report ID: AV-' + Date.now().toString(36).toUpperCase(), pageW - margin, 23, { align: 'right' });
 
-  // ── Annotated Image ──
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('Annotated Image', margin, y);
-  y += 3;
+      y = 44;
 
-  // Get the annotated canvas as image data
-  const imgData = canvas.toDataURL('image/jpeg', 0.92);
-  const imgAspect = canvas.height / canvas.width;
-  const imgDisplayW = contentW;
-  const imgDisplayH = imgDisplayW * imgAspect;
-  // Cap image height to avoid overflow
-  const maxImgH = 100;
-  const finalW = imgDisplayH > maxImgH ? maxImgH / imgAspect : imgDisplayW;
-  const finalH = imgDisplayH > maxImgH ? maxImgH : imgDisplayH;
+      // ── Inspector & Vehicle Details ──
+      const user = _userData || {};
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...TEXT_DARK);
+      doc.text('Inspector & Vehicle Information', margin, y);
+      y += 6;
 
-  // Border around image
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.3);
-  doc.rect(margin, y, finalW, finalH);
-  doc.addImage(imgData, 'JPEG', margin, y, finalW, finalH);
-  y += finalH + 8;
+      // Details grid
+      const detailRows = [
+        ['Inspector Name', user.fullname || '-', 'Email', user.email || '-'],
+        ['Phone', user.phone || '-', 'Organisation', user.company || '-'],
+        ['Vehicle Reg. No.', user.vehicleReg || '-', 'Make / Model', user.vehicleModel || '-'],
+        ['Vehicle Owner', user.ownerName || '-', 'Inspection Date', dateStr + ' ' + timeStr],
+      ];
 
-  // Check if we need a new page before the table
-  if (y > pageH - 80) {
-    doc.addPage();
-    y = margin;
-  }
+      const colLabelW = 32;
+      const colValW = (contentW / 2) - colLabelW;
 
-  // ── Detection Details Table ──
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('Detection Details', margin, y);
-  y += 6;
+      detailRows.forEach(row => {
+        // Left pair
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_MID);
+        doc.text(row[0] + ':', margin, y + 4);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(row[1], margin + colLabelW, y + 4);
 
-  // Table header
-  const cols = [
-    { label: '#',           w: 8 },
-    { label: 'DAMAGE TYPE', w: 36 },
-    { label: 'CONFIDENCE',  w: 28 },
-    { label: 'SEVERITY',    w: 24 },
-    { label: 'AREA %',      w: 20 },
-    { label: 'EST. COST (Rs.)', w: contentW - 8 - 36 - 28 - 24 - 20 },
-  ];
+        // Right pair
+        const rx = margin + contentW / 2 + 4;
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_MID);
+        doc.text(row[2] + ':', rx, y + 4);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(row[3], rx + colLabelW, y + 4);
 
-  // Header row
-  doc.setFillColor(...DARK);
-  const rowH = 8;
-  doc.rect(margin, y, contentW, rowH, 'F');
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...WHITE);
-  let cx = margin + 2;
-  cols.forEach(col => {
-    doc.text(col.label, cx, y + 5.5);
-    cx += col.w;
-  });
-  y += rowH;
+        y += 7;
+      });
 
-  // Table rows
-  allDetections.forEach((d, i) => {
-    if (y > pageH - 25) { doc.addPage(); y = margin; }
+      y += 4;
+      drawHR(y, [220, 220, 220]);
+      y += 8;
 
-    const isEven = i % 2 === 0;
-    if (isEven) {
-      doc.setFillColor(248, 249, 250);
+      // ── Summary section ──
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...TEXT_DARK);
+      doc.text('Inspection Summary', margin, y);
+      y += 7;
+
+      const apiData = window._apiData;
+      const totalMin = apiData ? apiData.total_cost_min : allDetections.reduce((s, d) => s + (d.cost_min || 5000), 0);
+      const totalMax = apiData ? apiData.total_cost_max : Math.round(totalMin * 1.35);
+      const highCount = allDetections.filter(d => d.severity === 'high').length;
+      const medCount = allDetections.filter(d => d.severity === 'medium').length;
+      const lowCount = allDetections.filter(d => d.severity === 'low').length;
+
+      // Summary cards row
+      const cardW = (contentW - 6) / 3;
+      const cards = [
+        { label: 'Total Damages', value: String(allDetections.length), color: PRIMARY },
+        { label: 'Est. Repair Cost', value: 'Rs.' + totalMin.toLocaleString('en-IN') + ' - Rs.' + totalMax.toLocaleString('en-IN'), color: [14, 165, 233] },
+        { label: 'Severity Breakdown', value: highCount + ' High / ' + medCount + ' Med / ' + lowCount + ' Low', color: [245, 158, 11] },
+      ];
+
+      cards.forEach((card, i) => {
+        const cx = margin + i * (cardW + 3);
+        doc.setFillColor(248, 249, 250);
+        doc.roundedRect(cx, y, cardW, 22, 2, 2, 'F');
+        // Top accent line
+        doc.setFillColor(...card.color);
+        doc.rect(cx, y, cardW, 1.5, 'F');
+        // Label
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_MID);
+        doc.text(card.label.toUpperCase(), cx + 4, y + 7);
+        // Value
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(card.value, cx + 4, y + 16);
+      });
+      y += 30;
+
+      // ── Annotated Image ──
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...TEXT_DARK);
+      doc.text('Annotated Image', margin, y);
+      y += 3;
+
+      // Get the annotated canvas as image data
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const imgAspect = canvas.height / canvas.width;
+      const imgDisplayW = contentW;
+      const imgDisplayH = imgDisplayW * imgAspect;
+      // Cap image height to avoid overflow
+      const maxImgH = 100;
+      const finalW = imgDisplayH > maxImgH ? maxImgH / imgAspect : imgDisplayW;
+      const finalH = imgDisplayH > maxImgH ? maxImgH : imgDisplayH;
+
+      // Border around image
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, y, finalW, finalH);
+      doc.addImage(imgData, 'JPEG', margin, y, finalW, finalH);
+      y += finalH + 8;
+
+      // Check if we need a new page before the table
+      if (y > pageH - 80) {
+        doc.addPage();
+        y = margin;
+      }
+
+      // ── Detection Details Table ──
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...TEXT_DARK);
+      doc.text('Detection Details', margin, y);
+      y += 6;
+
+      // Table header
+      const cols = [
+        { label: '#', w: 8 },
+        { label: 'DAMAGE TYPE', w: 36 },
+        { label: 'CONFIDENCE', w: 28 },
+        { label: 'SEVERITY', w: 24 },
+        { label: 'AREA %', w: 20 },
+        { label: 'EST. COST (Rs.)', w: contentW - 8 - 36 - 28 - 24 - 20 },
+      ];
+
+      // Header row
+      doc.setFillColor(...DARK);
+      const rowH = 8;
       doc.rect(margin, y, contentW, rowH, 'F');
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...WHITE);
+      let cx = margin + 2;
+      cols.forEach(col => {
+        doc.text(col.label, cx, y + 5.5);
+        cx += col.w;
+      });
+      y += rowH;
+
+      // Table rows
+      allDetections.forEach((d, i) => {
+        if (y > pageH - 25) { doc.addPage(); y = margin; }
+
+        const isEven = i % 2 === 0;
+        if (isEven) {
+          doc.setFillColor(248, 249, 250);
+          doc.rect(margin, y, contentW, rowH, 'F');
+        }
+
+        const cls = (d.class || '').replace(/\b\w/g, c => c.toUpperCase());
+        const conf = Math.round(d.confidence * 100) + '%';
+        const sev = d.severity || '—';
+        const area = d.area_norm ? (d.area_norm * 100).toFixed(1) + '%' : '—';
+        const cost = d.cost_min || BASE_COST[d.class] || 5000;
+        const costMax = d.cost_max || Math.round(cost * 1.4);
+        const costStr = 'Rs.' + cost.toLocaleString('en-IN') + ' - Rs.' + costMax.toLocaleString('en-IN');
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_DARK);
+        cx = margin + 2;
+
+        // #
+        doc.text(String(i + 1), cx, y + 5.5);
+        cx += cols[0].w;
+
+        // Damage type
+        doc.setFont('helvetica', 'bold');
+        doc.text(cls, cx, y + 5.5);
+        doc.setFont('helvetica', 'normal');
+        cx += cols[1].w;
+
+        // Confidence
+        doc.text(conf, cx, y + 5.5);
+        cx += cols[2].w;
+
+        // Severity badge
+        const sevColor = SEV_COLORS[sev] || [150, 150, 150];
+        doc.setFillColor(...sevColor);
+        const sevText = sev.toUpperCase();
+        const sevTW = doc.getTextWidth(sevText);
+        doc.roundedRect(cx, y + 1.5, sevTW + 4, 5, 1, 1, 'F');
+        doc.setTextColor(...WHITE);
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(sevText, cx + 2, y + 5);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_DARK);
+        cx += cols[3].w;
+
+        // Area
+        doc.text(area, cx, y + 5.5);
+        cx += cols[4].w;
+
+        // Cost
+        doc.setFont('helvetica', 'bold');
+        doc.text(costStr, cx, y + 5.5);
+
+        y += rowH;
+      });
+
+      y += 6;
+      drawHR(y, [200, 200, 200]);
+      y += 6;
+
+      // ── Total cost row ──
+      if (y > pageH - 30) { doc.addPage(); y = margin; }
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...TEXT_DARK);
+      doc.text('Total Estimated Repair Cost:', margin, y);
+      doc.setTextColor(...PRIMARY);
+      doc.text('Rs.' + totalMin.toLocaleString('en-IN') + ' - Rs.' + totalMax.toLocaleString('en-IN'), margin + 65, y);
+      y += 10;
+
+      // ── Disclaimer ──
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(...TEXT_MID);
+      const disclaimer = 'Disclaimer: This report is generated by an AI model and the cost estimates are approximate. Actual repair costs may vary based on location, vehicle model, parts availability, and workshop rates. Please consult a certified mechanic for an accurate assessment.';
+      const splitDisclaimer = doc.splitTextToSize(disclaimer, contentW);
+      doc.text(splitDisclaimer, margin, y);
+      y += splitDisclaimer.length * 3.5 + 6;
+
+      // ── Footer ──
+      const footerY = pageH - 10;
+      drawHR(footerY - 4, [220, 220, 220]);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(160, 160, 160);
+      doc.text('Generated by AutoVision AI Inspection System', margin, footerY);
+      doc.text(dateStr + ' ' + timeStr, pageW - margin, footerY, { align: 'right' });
+
+      // ── Save ──
+      doc.save('AutoVision_Report.pdf');
     }
 
-    const cls     = (d.class || '').replace(/\b\w/g, c => c.toUpperCase());
-    const conf    = Math.round(d.confidence * 100) + '%';
-    const sev     = d.severity || '—';
-    const area    = d.area_norm ? (d.area_norm * 100).toFixed(1) + '%' : '—';
-    const cost    = d.cost_min || BASE_COST[d.class] || 5000;
-    const costMax = d.cost_max || Math.round(cost * 1.4);
-    const costStr = 'Rs.' + cost.toLocaleString('en-IN') + ' - Rs.' + costMax.toLocaleString('en-IN');
+    function shareResult() { showError('Share link copied to clipboard! (demo)'); }
 
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_DARK);
-    cx = margin + 2;
+    // ── Helpers ───────────────────────────────────────
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    // #
-    doc.text(String(i + 1), cx, y + 5.5);
-    cx += cols[0].w;
+    function animateCount(id, from, to, dur) {
+      const el = document.getElementById(id);
+      const start = performance.now();
+      function tick(now) {
+        const p = Math.min((now - start) / dur, 1);
+        el.textContent = String(Math.round(from + (to - from) * p)).padStart(2, '0');
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
 
-    // Damage type
-    doc.setFont('helvetica', 'bold');
-    doc.text(cls, cx, y + 5.5);
-    doc.setFont('helvetica', 'normal');
-    cx += cols[1].w;
-
-    // Confidence
-    doc.text(conf, cx, y + 5.5);
-    cx += cols[2].w;
-
-    // Severity badge
-    const sevColor = SEV_COLORS[sev] || [150,150,150];
-    doc.setFillColor(...sevColor);
-    const sevText = sev.toUpperCase();
-    const sevTW = doc.getTextWidth(sevText);
-    doc.roundedRect(cx, y + 1.5, sevTW + 4, 5, 1, 1, 'F');
-    doc.setTextColor(...WHITE);
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'bold');
-    doc.text(sevText, cx + 2, y + 5);
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_DARK);
-    cx += cols[3].w;
-
-    // Area
-    doc.text(area, cx, y + 5.5);
-    cx += cols[4].w;
-
-    // Cost
-    doc.setFont('helvetica', 'bold');
-    doc.text(costStr, cx, y + 5.5);
-
-    y += rowH;
-  });
-
-  y += 6;
-  drawHR(y, [200,200,200]);
-  y += 6;
-
-  // ── Total cost row ──
-  if (y > pageH - 30) { doc.addPage(); y = margin; }
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('Total Estimated Repair Cost:', margin, y);
-  doc.setTextColor(...PRIMARY);
-  doc.text('Rs.' + totalMin.toLocaleString('en-IN') + ' - Rs.' + totalMax.toLocaleString('en-IN'), margin + 65, y);
-  y += 10;
-
-  // ── Disclaimer ──
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(...TEXT_MID);
-  const disclaimer = 'Disclaimer: This report is generated by an AI model and the cost estimates are approximate. Actual repair costs may vary based on location, vehicle model, parts availability, and workshop rates. Please consult a certified mechanic for an accurate assessment.';
-  const splitDisclaimer = doc.splitTextToSize(disclaimer, contentW);
-  doc.text(splitDisclaimer, margin, y);
-  y += splitDisclaimer.length * 3.5 + 6;
-
-  // ── Footer ──
-  const footerY = pageH - 10;
-  drawHR(footerY - 4, [220,220,220]);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(160, 160, 160);
-  doc.text('Generated by AutoVision AI Inspection System', margin, footerY);
-  doc.text(dateStr + ' ' + timeStr, pageW - margin, footerY, { align: 'right' });
-
-  // ── Save ──
-  doc.save('AutoVision_Report.pdf');
-}
-
-function shareResult() { showError('Share link copied to clipboard! (demo)'); }
-
-// ── Helpers ───────────────────────────────────────
-function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
-
-function animateCount(id, from, to, dur) {
-  const el = document.getElementById(id);
-  const start = performance.now();
-  function tick(now) {
-    const p = Math.min((now-start)/dur,1);
-    el.textContent = String(Math.round(from + (to-from)*p)).padStart(2,'0');
-    if (p<1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-function showError(msg) {
-  const t = document.getElementById('error-toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-</script>
+    function showError(msg) {
+      const t = document.getElementById('error-toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
 </body>
+
 </html>
