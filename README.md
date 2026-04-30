@@ -56,8 +56,37 @@ Reduced estimation error
 
 🖥️ Demo
 
-Frontend:
-👉 https://your-vercel-link.vercel.app
+Project Link:
+👉 https://auto-vision-2p5u.vercel.app
 
-Backend API Docs:
-👉 https://your-hf-space.hf.space/docs
+
+⚙️ Installation & Setup
+1. Clone repo:
+git clone https://github.com/Kathanshah5510/AutoVision.git
+cd autovision
+
+2. Backend setup
+pip install -r requirements.txt
+uvicorn backend.backend:app --reload
+
+3. Frontend setup
+cd frontend
+npm install
+npm run dev
+
+
+▶️ How to Use
+1. Open the web app
+2. Upload a car image
+3. Enter:
+  - Car model
+  - Age
+  - KM driven
+4. Click Analyze
+5. View:
+  - Damage detections
+  - Annotated image
+  - Cost estimate
+
+📂 Dataset
+Custom / CarDD dataset (https://drive.google.com/file/d/1bbyqVCKZX5Ur5Zg-uKj0jD0maWAVeOLx/view?usp=sharing)
